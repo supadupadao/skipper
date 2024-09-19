@@ -1,4 +1,4 @@
-name: Blueprint check
+name: Contract checks
 
 on:
   push:
