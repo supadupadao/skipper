@@ -1,0 +1,26 @@
+name: Contract checks
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+
+    - name: NPM Install
+      run: npm install
+
+    - name: Build contracts
+      run: npm run build
+
+    - name: Run tests
+      run: npm test
