@@ -1,4 +1,5 @@
 import "@stdlib/deploy";
+import "./lock.tact";
 
 contract Skipper with Deployable {
     // Empty init() function is present by default in all Tact contracts

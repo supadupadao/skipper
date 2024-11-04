@@ -1,4 +1,4 @@
-import "@stdlib/ownable";
+import "@stdlib/deploy";
 import "./consts.tact";
 import "./errors.tact";
 import "./messages.tact";
@@ -8,7 +8,7 @@ struct LockData {
     owner: Address;
 }
 
-contract JettonLock with Ownable {
+contract JettonLock with Deployable {
     amount: Int as coins = 0;
     unlock_date: Int as uint64 = 0;
     owner: Address;
@@ -21,6 +21,7 @@ contract JettonLock with Ownable {
     receive(msg: JettonTransferNotification){
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.jetton_wallet);
         self.amount += msg.amount;
+        self.unlock_date = now() + LOCK_INTERVAL;
     }
 
     receive(msg: SendProxyMessage){
