@@ -21,8 +21,8 @@ message(0x690101) SendProxyMessage {
 }
 message(0x690102) ProxyMessage {
     owner: Address;
-    unlock_date: Int;
-    amount: Int;
+    unlock_date: Int as uint64;
+    amount: Int as coins;
     payload: Cell;
 }
 message(0x690103) UnlockJettons {
