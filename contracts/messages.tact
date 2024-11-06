@@ -14,7 +14,12 @@ message(0x0f8a7ea5) JettonTransfer {
     forward_ton_amount: Int as coins;
     forward_payload: Slice as remaining;
 }
-/* Lock messages */
+/* Common structs */
+struct ProposalData {
+    receiver: Address;
+    body: Cell;
+}
+/* 01 - Lock messages */
 message(0x690101) SendProxyMessage {
     to: Address;
     payload: Cell;
@@ -26,4 +31,24 @@ message(0x690102) ProxyMessage {
     payload: Cell;
 }
 message(0x690103) UnlockJettons {
+}
+/* 02 - Proposal messages */
+message(0x690201) InitProposal {
+    initiator: Address;
+    amount: Int as coins;
+    data: ProposalData;
+}
+/* 03 - Voter */
+message(0x690301) InitVoter {
+    amount: Int as coins;
+}
+message(0x690302) UpdateVoterBalance {
+    new_amount: Int as coins;
+}
+message(0x690303) VoterIncrementVotes {
+    diff: Int as coins;
+}
+/* 04 - Skipper */
+message(0x690401) RequestNewProposal {
+    data: ProposalData;
 }
