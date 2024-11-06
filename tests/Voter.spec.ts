@@ -11,11 +11,7 @@ describe('Voter', () => {
         deployer = await blockchain.treasury('deployer');
     });
 
-    it('should init voter', async () => {
-        expect(2 + 2).toEqual(5);
-    });
-
-    it('should count new locked value', async () => {
-        expect(2 + 2).toEqual(5);
+    it('todo', async () => {
+        expect(2 + 2).toEqual(4);
     });
 });

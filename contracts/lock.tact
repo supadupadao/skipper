@@ -2,9 +2,16 @@ import "@stdlib/deploy";
 import "./consts.tact";
 import "./errors.tact";
 import "./messages.tact";
+
+fun computeJettonWalletStateInit(master: Address, owner: Address): StateInit {
+    let data = beginCell().storeRef(JETTON_SYSTEM_CELL).storeUint(0, 1).storeAddress(master).storeAddress(owner
+    ).endCell();
+    return StateInit{code: JETTON_WALLET_CODE, data: data};
+}
+
 struct LockData {
-    amount: Int;
-    unlock_date: Int;
+    amount: Int as coins;
+    unlock_date: Int as uint64;
     owner: Address;
 }
 
@@ -12,14 +19,16 @@ contract JettonLock with Deployable {
     amount: Int as coins = 0;
     unlock_date: Int as uint64 = 0;
     owner: Address;
-    jetton_wallet: Address;
-    init(owner: Address, jetton_wallet: Address){
+    jetton_master: Address;
+    init(owner: Address, jetton_master: Address){
         self.owner = owner;
-        self.jetton_wallet = jetton_wallet;
+        self.jetton_master = jetton_master;
     }
 
     receive(msg: JettonTransferNotification){
-        nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.jetton_wallet);
+        let jetton_wallet_init = computeJettonWalletStateInit(self.jetton_master, myAddress());
+        let jetton_wallet_address = contractAddress(jetton_wallet_init);
+        nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == jetton_wallet_address);
         self.amount += msg.amount;
         self.unlock_date = now() + LOCK_INTERVAL;
     }
@@ -48,8 +57,9 @@ contract JettonLock with Deployable {
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.owner);
         nativeThrowUnless(ERROR_CODE_NEED_FEE, ctx.value >= MIN_LOCK_FEE);
         nativeThrowUnless(ERROR_UNLOCK_DATE_NOT_ARRIVED, now() > self.unlock_date);
+        let jetton_wallet_init = computeJettonWalletStateInit(self.jetton_master, myAddress());
         send(SendParameters{
-                to: self.jetton_wallet,
+                to: contractAddress(jetton_wallet_init),
                 value: 0,
                 mode: SendRemainingBalance,
                 bounce: true,

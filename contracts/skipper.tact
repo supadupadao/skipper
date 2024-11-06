@@ -3,12 +3,6 @@ import "./consts.tact";
 import "./lock.tact";
 import "./proposal.tact";
 
-fun computeJettonWalletStateInit(master: Address, owner: Address): StateInit {
-    let data = beginCell().storeRef(JETTON_SYSTEM_CELL).storeUint(0, 1).storeAddress(master).storeAddress(owner
-    ).endCell();
-    return StateInit{code: JETTON_WALLET_CODE, data: data};
-}
-
 contract Skipper with Deployable {
     jetton_master: Address;
     last_proposal_id: Int as uint64 = 0;
@@ -17,9 +11,7 @@ contract Skipper with Deployable {
     }
 
     receive(msg: ProxyMessage){
-        let jetton_wallet_init = computeJettonWalletStateInit(self.jetton_master, msg.owner);
-        let jetton_wallet_address = contractAddress(jetton_wallet_init);
-        let jetton_lock_init = initOf JettonLock(msg.owner, jetton_wallet_address);
+        let jetton_lock_init = initOf JettonLock(msg.owner, self.jetton_master);
         let jetton_lock_address = contractAddress(jetton_lock_init);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == jetton_lock_address);
         let op = msg.payload.asSlice().loadUint(64);
