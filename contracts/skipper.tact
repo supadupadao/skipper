@@ -38,5 +38,18 @@ contract Skipper with Deployable {
                 }
             );
         }
+        if (op == 0x690402) {
+            let payload = VoteForProposal.fromCell(msg.payload);
+            let proposal_init = initOf Proposal(myAddress(), payload.proposal_id);
+            let voter_init = initOf Voter(myAddress(), contractAddress(proposal_init), msg.owner);
+            send(SendParameters{
+                    to: contractAddress(voter_init),
+                    value: 0,
+                    mode: SendRemainingValue,
+                    bounce: false,
+                    body: UpdateVoterBalance{amount: msg.amount, vote: payload.vote}.toCell()
+                }
+            );
+        }
     }
 }

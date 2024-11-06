@@ -28,6 +28,17 @@ contract Proposal {
             }
         );
     }
+
+    receive(msg: UpdateVotes){
+        let voter_init = initOf Voter(self.master, myAddress(), msg.owner);
+        nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == contractAddress(voter_init));
+        if (msg.vote == 1) {
+            self.votes_yes += msg.amount;
+        }
+        if (msg.vote == 0) {
+            self.votes_no += msg.amount;
+        }
+    }
 }
 
 contract Voter {
@@ -43,14 +54,18 @@ contract Voter {
 
     receive(msg: InitVoter){
         // TODO check already initialized
-        // TODO sender is DAO?
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.proposal);
         self.amount = msg.amount;
     }
 
     receive(msg: UpdateVoterBalance){
-        // TODO
-        // check sender is DAO
-        // send diff to proposal
+        nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);
+        send(SendParameters{
+                to: self.proposal,
+                value: 0,
+                mode: SendRemainingValue,
+                body: UpdateVotes{owner: self.owner, amount: msg.amount - self.amount, vote: msg.vote}.toCell()
+            }
+        );
     }
 }

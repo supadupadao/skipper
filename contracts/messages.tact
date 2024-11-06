@@ -38,17 +38,24 @@ message(0x690201) InitProposal {
     amount: Int as coins;
     data: ProposalData;
 }
+message(0x690202) UpdateVotes {
+    owner: Address;
+    amount: Int as coins;
+    vote: Int as uint1; // true = 1 | false = 0
+}
 /* 03 - Voter */
 message(0x690301) InitVoter {
     amount: Int as coins;
 }
 message(0x690302) UpdateVoterBalance {
-    new_amount: Int as coins;
-}
-message(0x690303) VoterIncrementVotes {
-    diff: Int as coins;
+    amount: Int as coins;
+    vote: Int as uint1; // true = 1 | false = 0
 }
 /* 04 - Skipper */
 message(0x690401) RequestNewProposal {
     data: ProposalData;
+}
+message(0x690402) VoteForProposal {
+    proposal_id: Int as uint64;
+    vote: Int as uint1; // true = 1 | false = 0
 }
