@@ -21,6 +21,7 @@ contract Proposal {
         send(SendParameters{ // TODO update value
                 to: contractAddress(voter_init),
                 value: 0,
+                mode: SendRemainingValue,
                 bounce: true,
                 code: voter_init.code,
                 data: voter_init.data,

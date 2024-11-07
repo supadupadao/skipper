@@ -5,6 +5,7 @@ import '@ton/test-utils';
 import { JettonMaster } from './JettonMaster';
 import { JettonWallet } from './JettonWallet';
 import { JettonLock } from '../wrappers/Lock';
+import { Proposal } from '../wrappers/Proposal';
 
 describe('Integration tests', () => {
     let blockchain: Blockchain;
@@ -13,6 +14,7 @@ describe('Integration tests', () => {
     let jetton_wallet: SandboxContract<JettonWallet>;
     let skipper: SandboxContract<Skipper>;
     let lock: SandboxContract<JettonLock>;
+    let proposal: SandboxContract<Proposal>;
 
     beforeEach(async () => {
         blockchain = await Blockchain.create();
@@ -23,6 +25,7 @@ describe('Integration tests', () => {
         jetton_wallet = blockchain.openContract(await JettonWallet.fromInit(jetton_master.address, deployer.address));
         skipper = blockchain.openContract(await Skipper.fromInit(jetton_master.address));
         lock = blockchain.openContract(await JettonLock.fromInit(deployer.address, jetton_master.address));
+        proposal = blockchain.openContract(await Proposal.fromInit(skipper.address, 1n));
 
         const deployResult = await skipper.send(
             deployer.getSender(),
@@ -66,10 +69,10 @@ describe('Integration tests', () => {
                 queryId: 0n,
             }
         );
-        const lockResult = await jetton_wallet.send(
+        await jetton_wallet.send(
             deployer.getSender(),
             {
-                value: toNano('0.05'),
+                value: toNano('0.1'),
             },
             {
                 $$type: 'JettonTransfer',
@@ -78,19 +81,53 @@ describe('Integration tests', () => {
                 destination: lock.address,
                 custom_payload: null,
                 forward_payload: beginCell().asSlice(),
-                forward_ton_amount: 1n,
+                forward_ton_amount: toNano("0.05"),
                 response_destination: lock.address,
             }
         );
-        // expect(lockResult.transactions).toHaveTransaction({
-        //     from: jetton_wallet.address,
-        //     to: lock.address,
-        // });
-        // const lockData = await lock.getGetLockData();
-        // expect(lockData.amount).toEqual(toNano('100500'));
+        const lockData = await lock.getGetLockData();
+        expect(lockData.amount).toEqual(toNano('100500'));
     });
 
     it('should create proposal', async () => {
-        // TODO
+        const createProposalResult = await lock.send(
+            deployer.getSender(),
+            {
+                value: toNano("1")
+            },
+            {
+                $$type: 'SendProxyMessage',
+                to: skipper.address,
+                payload: beginCell()
+                    .storeUint(0x690401, 32)
+                    .storeAddress(deployer.address)
+                    .storeRef(beginCell().endCell())
+                    .asCell(),
+            }
+        );
+        expect(createProposalResult.transactions).toHaveTransaction({
+            from: deployer.address,
+            to: lock.address,
+            success: true,
+            op: 0x690101,
+        });
+        expect(createProposalResult.transactions).toHaveTransaction({
+            from: lock.address,
+            to: skipper.address,
+            success: true,
+            op: 0x690102,
+        });
+        expect(createProposalResult.transactions).toHaveTransaction({
+            from: skipper.address,
+            to: proposal.address,
+            success: true,
+            op: 0x690201,
+        });
+        expect(createProposalResult.transactions).toHaveTransaction({
+            from: proposal.address,
+            // to: voter.address,
+            success: true,
+            op: 0x690301,
+        });
     });
 });

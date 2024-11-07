@@ -14,7 +14,7 @@ contract Skipper with Deployable {
         let jetton_lock_init = initOf JettonLock(msg.owner, self.jetton_master);
         let jetton_lock_address = contractAddress(jetton_lock_init);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == jetton_lock_address);
-        let op = msg.payload.asSlice().loadUint(64);
+        let op = msg.payload.asSlice().loadUint(32);
         if (op == 0x690401) {
             let payload = RequestNewProposal.fromCell(msg.payload);
             self.last_proposal_id += 1;
@@ -29,6 +29,7 @@ contract Skipper with Deployable {
                     body: InitProposal{initiator: msg.owner, amount: msg.amount, data: payload.data}.toCell()
                 }
             );
+            return;
         }
         if (op == 0x690402) {
             let payload = VoteForProposal.fromCell(msg.payload);
@@ -42,6 +43,8 @@ contract Skipper with Deployable {
                     body: UpdateVoterBalance{amount: msg.amount, vote: payload.vote}.toCell()
                 }
             );
+            return;
         }
+        nativeThrow(404);
     }
 }
