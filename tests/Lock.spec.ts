@@ -1,7 +1,9 @@
 import '@ton/test-utils';
-import { address, beginCell, toNano } from '@ton/core';
+import { address, beginCell, comment, toNano } from '@ton/core';
 import { Blockchain, SandboxContract, TreasuryContract } from '@ton/sandbox';
 import { JettonLock } from '../wrappers/Lock';
+import { JettonMaster } from './JettonMaster';
+import { JettonWallet } from './JettonWallet';
 
 const LOCK_INTERVAL = 1209600;
 const ZERO_ADDRESS = address("0:0000000000000000000000000000000000000000000000000000000000000000");
@@ -10,14 +12,16 @@ describe('Success lock behavior', () => {
     let blockchain: Blockchain;
     let deployer: SandboxContract<TreasuryContract>;
     let lock: SandboxContract<JettonLock>;
-    let jetton_wallet: SandboxContract<TreasuryContract>;
+    let jetton_master: SandboxContract<JettonMaster>;
+    let jetton_wallet: SandboxContract<JettonWallet>;
 
     beforeAll(async () => {
         blockchain = await Blockchain.create();
 
         deployer = await blockchain.treasury('deployer');
-        jetton_wallet = await blockchain.treasury('jetton_wallet');
-        lock = blockchain.openContract(await JettonLock.fromInit(deployer.address, jetton_wallet.address));
+        jetton_master = blockchain.openContract(await JettonMaster.fromInit(deployer.address));
+        jetton_wallet = blockchain.openContract(await JettonWallet.fromInit(jetton_master.address, deployer.address));
+        lock = blockchain.openContract(await JettonLock.fromInit(deployer.address, jetton_master.address));
 
         await lock.send(
             deployer.getSender(),
@@ -29,30 +33,45 @@ describe('Success lock behavior', () => {
                 queryId: 0n,
             }
         );
+        await jetton_master.send(
+            deployer.getSender(),
+            {
+                value: toNano("0.05"),
+            },
+            {
+                $$type: 'JettonMint',
+                query_id: 0n,
+                amount: toNano('100500'),
+                destination: deployer.address,
+            }
+        );
+        const jettonWalletData = await jetton_wallet.getGetWalletData();
+        expect(jettonWalletData.balance).toEqual(toNano('100500'));
     });
 
     it('should handle transfer notification', async () => {
         let startTime = Math.floor(Date.now() / 1000);
 
         blockchain.now = startTime;
-        const transferNotification = await lock.send(
-            jetton_wallet.getSender(),
+        const transferNotification = await jetton_wallet.send(
+            deployer.getSender(),
             {
-                value: toNano('0.05'),
+                value: toNano('0.5'),
             },
             {
-                $$type: 'JettonTransferNotification',
+                $$type: 'JettonTransfer',
                 query_id: 0n,
-                amount: toNano('100500'),
-                sender: deployer.address,
-                forward_payload: beginCell().asSlice(),
+                amount: toNano("100500"),
+                destination: lock.address,
+                custom_payload: null,
+                forward_payload: comment("Lock").asSlice(),
+                forward_ton_amount: toNano('0.05'),
+                response_destination: lock.address,
             }
         );
         expect(transferNotification.transactions).toHaveTransaction({
-            from: jetton_wallet.address,
             to: lock.address,
             success: true,
-            deploy: false,
             op: 0x7362d09c,
         });
 
@@ -114,7 +133,6 @@ describe('Success lock behavior', () => {
         });
         expect(unlockResult.transactions).toHaveTransaction({
             from: lock.address,
-            to: jetton_wallet.address,
             success: true,
             op: 0x0f8a7ea5,
         });
@@ -125,16 +143,18 @@ describe('Error handling for lock', () => {
     let blockchain: Blockchain;
     let deployer: SandboxContract<TreasuryContract>;
     let lock: SandboxContract<JettonLock>;
-    let jetton_wallet: SandboxContract<TreasuryContract>;
+    let jetton_master: SandboxContract<JettonMaster>;
+    let jetton_wallet: SandboxContract<JettonWallet>;
     let other_contract: SandboxContract<TreasuryContract>;
 
     beforeEach(async () => {
         blockchain = await Blockchain.create();
 
         deployer = await blockchain.treasury('deployer');
-        jetton_wallet = await blockchain.treasury('jetton_wallet');
+        jetton_master = blockchain.openContract(await JettonMaster.fromInit(deployer.address));
+        jetton_wallet = blockchain.openContract(await JettonWallet.fromInit(jetton_master.address, deployer.address));
         other_contract = await blockchain.treasury('other_contract');
-        lock = blockchain.openContract(await JettonLock.fromInit(deployer.address, jetton_wallet.address));
+        lock = blockchain.openContract(await JettonLock.fromInit(deployer.address, jetton_master.address));
 
         await lock.send(
             deployer.getSender(),
@@ -146,6 +166,20 @@ describe('Error handling for lock', () => {
                 queryId: 0n,
             }
         );
+        await jetton_master.send(
+            deployer.getSender(),
+            {
+                value: toNano("0.05"),
+            },
+            {
+                $$type: 'JettonMint',
+                query_id: 0n,
+                amount: toNano('100500'),
+                destination: deployer.address,
+            }
+        );
+        const jettonWalletData = await jetton_wallet.getGetWalletData();
+        expect(jettonWalletData.balance).toEqual(toNano('100500'));
     });
 
     it('should validate jetton wallet address', async () => {
@@ -260,24 +294,25 @@ describe('Error handling for lock', () => {
         let startTime = Math.floor(Date.now() / 1000);
 
         blockchain.now = startTime;
-        const transferNotification = await lock.send(
-            jetton_wallet.getSender(),
+        const transferNotification = await jetton_wallet.send(
+            deployer.getSender(),
             {
-                value: toNano('0.05'),
+                value: toNano('0.5'),
             },
             {
-                $$type: 'JettonTransferNotification',
+                $$type: 'JettonTransfer',
                 query_id: 0n,
-                amount: toNano('100500'),
-                sender: deployer.address,
-                forward_payload: beginCell().asSlice(),
+                amount: toNano("100500"),
+                destination: lock.address,
+                custom_payload: null,
+                forward_payload: comment("Lock").asSlice(),
+                forward_ton_amount: toNano('0.05'),
+                response_destination: lock.address,
             }
         );
         expect(transferNotification.transactions).toHaveTransaction({
-            from: jetton_wallet.address,
             to: lock.address,
             success: true,
-            deploy: false,
             op: 0x7362d09c,
         });
 
