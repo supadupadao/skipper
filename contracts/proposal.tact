@@ -40,6 +40,10 @@ contract Proposal {
             self.votes_no += msg.amount;
         }
     }
+
+    get fun get_proposal_data(): ProposalData? {
+        return self.data;
+    }
 }
 
 contract Voter {
@@ -68,5 +72,9 @@ contract Voter {
                 body: UpdateVotes{owner: self.owner, amount: msg.amount - self.amount, vote: msg.vote}.toCell()
             }
         );
+    }
+
+    get fun get_voter_amount(): Int {
+        return self.amount;
     }
 }

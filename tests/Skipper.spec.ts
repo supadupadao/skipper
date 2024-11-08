@@ -16,7 +16,7 @@ describe('Integration tests', () => {
     let lock: SandboxContract<JettonLock>;
     let proposal: SandboxContract<Proposal>;
 
-    beforeEach(async () => {
+    beforeAll(async () => {
         blockchain = await Blockchain.create();
 
         deployer = await blockchain.treasury('deployer');
@@ -128,6 +128,52 @@ describe('Integration tests', () => {
             // to: voter.address,
             success: true,
             op: 0x690301,
+        });
+
+        const proposalData = await proposal.getGetProposalData();
+        expect(proposalData?.receiver.toString()).toEqual(deployer.address.toString());
+        // TODO validate proposal data payload
+    });
+
+    it('should vote for proposal', async () => {
+        const voteProposalResult = await lock.send(
+            deployer.getSender(),
+            {
+                value: toNano("1")
+            },
+            {
+                $$type: 'SendProxyMessage',
+                to: skipper.address,
+                payload: beginCell()
+                    .storeUint(0x690402, 32)
+                    .storeUint(1, 64)
+                    .storeUint(1, 1)
+                    .asCell(),
+            }
+        );
+        expect(voteProposalResult.transactions).toHaveTransaction({
+            from: deployer.address,
+            to: lock.address,
+            success: true,
+            op: 0x690101,
+        });
+        expect(voteProposalResult.transactions).toHaveTransaction({
+            from: lock.address,
+            to: skipper.address,
+            success: true,
+            op: 0x690102,
+        });
+        expect(voteProposalResult.transactions).toHaveTransaction({
+            from: skipper.address,
+            // to: voter.address,
+            success: true,
+            op: 0x690302,
+        });
+        expect(voteProposalResult.transactions).toHaveTransaction({
+            // from: voter.address,
+            to: proposal.address,
+            success: true,
+            op: 0x690202,
         });
     });
 });

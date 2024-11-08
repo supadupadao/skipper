@@ -39,6 +39,8 @@ contract Skipper with Deployable {
                     to: contractAddress(voter_init),
                     value: 0,
                     mode: SendRemainingValue,
+                    code: voter_init.code,
+                    data: voter_init.data,
                     bounce: false,
                     body: UpdateVoterBalance{amount: msg.amount, vote: payload.vote}.toCell()
                 }
