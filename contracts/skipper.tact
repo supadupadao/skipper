@@ -2,6 +2,9 @@ import "@stdlib/deploy";
 import "./consts.tact";
 import "./lock.tact";
 import "./proposal.tact";
+struct SkipperData {
+    last_proposal_id: Int as uint64;
+}
 
 contract Skipper with Deployable {
     jetton_master: Address;
@@ -48,5 +51,9 @@ contract Skipper with Deployable {
             return;
         }
         nativeThrow(404);
+    }
+
+    get fun get_skipper_data(): SkipperData {
+        return SkipperData{last_proposal_id: self.last_proposal_id};
     }
 }
