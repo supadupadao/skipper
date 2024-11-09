@@ -43,6 +43,8 @@ message(0x690202) UpdateVotes {
     amount: Int as coins;
     vote: Int as uint1; // true = 1 | false = 0
 }
+message(0x690303) ExecuteProposal {
+}
 /* 03 - Voter */
 message(0x690301) InitVoter {
     amount: Int as coins;

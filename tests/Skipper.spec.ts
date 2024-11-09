@@ -52,12 +52,12 @@ describe('Integration tests', () => {
             {
                 $$type: 'JettonMint',
                 query_id: 0n,
-                amount: toNano('100500'),
+                amount: toNano('1337000'),
                 destination: deployer.address,
             }
         );
         const jettonWalletData = await jetton_wallet.getGetWalletData();
-        expect(jettonWalletData.balance).toEqual(toNano('100500'));
+        expect(jettonWalletData.balance).toEqual(toNano('1337000'));
 
         await lock.send(
             deployer.getSender(),
@@ -77,7 +77,7 @@ describe('Integration tests', () => {
             {
                 $$type: 'JettonTransfer',
                 query_id: 0n,
-                amount: toNano("100500"),
+                amount: toNano("1337000"),
                 destination: lock.address,
                 custom_payload: null,
                 forward_payload: beginCell().asSlice(),
@@ -86,7 +86,7 @@ describe('Integration tests', () => {
             }
         );
         const lockData = await lock.getGetLockData();
-        expect(lockData.amount).toEqual(toNano('100500'));
+        expect(lockData.amount).toEqual(toNano('1337000'));
     });
 
     it('should create proposal', async () => {
@@ -176,4 +176,27 @@ describe('Integration tests', () => {
             op: 0x690202,
         });
     });
+
+    it('should execute proposal', async () => {
+        const executeResult = await proposal.send(
+            deployer.getSender(),
+            {
+                value: toNano("0.05"),
+            },
+            {
+                $$type: 'ExecuteProposal',
+            }
+        );
+        expect(executeResult.transactions).toHaveTransaction({
+            from: deployer.address,
+            to: proposal.address,
+            success: true,
+            op: 0x690303,
+        });
+        expect(executeResult.transactions).toHaveTransaction({
+            from: proposal.address,
+            to: deployer.address,
+            success: true,
+        });
+    })
 });

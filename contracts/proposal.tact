@@ -1,5 +1,7 @@
 import "./errors.tact";
 import "./messages.tact";
+const PROPOSAL_ACCEPT_THRESHOLD: Int = ton("300000");
+const PROPOSAL_VOTES_GAP: Int = ton("10000");
 
 contract Proposal {
     master: Address;
@@ -39,6 +41,20 @@ contract Proposal {
         if (msg.vote == 0) {
             self.votes_no += msg.amount;
         }
+    }
+
+    receive(msg: ExecuteProposal){
+        nativeThrowUnless(ERROR_NO_ENOGH_VOTES, self.votes_yes > PROPOSAL_ACCEPT_THRESHOLD);
+        nativeThrowUnless(ERROR_TOO_MANY_NO_VOTES, self.votes_yes > (self.votes_no + PROPOSAL_VOTES_GAP));
+        nativeThrowUnless(ERROR_NOT_INITIALIZED, self.data != null);
+        send(SendParameters{
+                to: self.data!!.receiver,
+                value: 0,
+                bounce: false,
+                mode: SendRemainingBalance,
+                body: self.data!!.body,
+            }
+        );
     }
 
     get fun get_proposal_data(): ProposalData? {
