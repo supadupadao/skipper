@@ -18,38 +18,64 @@ This is default Tact blueprint project with default commands:
 
 # Docs
 
-## Contracts
-
-<b>TODO!</b>
-
-## Creating proposal
+## Contracts interaction
 
 ```mermaid
-graph TD;
-    User[User TON wallet];
-    JettonLock[Jetton lock];
-    Skipper[DAO main contract];
-    Proposal[Proposal instance];
-    Voter[Voter for proposal];
+sequenceDiagram
+    actor wallet as User TON wallet
+    participant jetton as Governance token
 
-    User -- 0x690101<0x690201> --> JettonLock;
-    JettonLock -- 0x690102<0x690201> --> Skipper;
-    Skipper -- 0x690201 --> Proposal;
-    Proposal -- 0x690301 --> Voter;
-```
+    Note left of wallet: LOCK TOKENS
+    create participant lock as Jetton lock
+    wallet ->> lock: Deploy
+    wallet ->> jetton: 0x0f8a7ea5<br/>(JettonTransfer)
+    activate jetton
+    Note over jetton: Send tokens to lock address
+    Note over jetton: Notify lock about transfer
+    jetton ->> lock: 0x7362d09c<br/>(JettonTransferNotification)
+    deactivate jetton
+    activate lock
+    Note over lock: Save transfered amount
+    deactivate lock
 
-## Voting in proposal
+    participant dao as DAO
 
-```mermaid
-graph TD;
-    User[User TON wallet];
-    JettonLock[Jetton lock];
-    Skipper[DAO main contract];
-    Proposal[Proposal instance];
-    Voter[Voter for proposal];
+    Note left of wallet: CREATE NEW PROPOSAL
+    wallet ->> lock: 0x690101<br/>(SendProxyMessage)<br/>with body<br/>0x690401<br/>(RequestNewProposal)
+    activate lock
+    Note over lock: Pass proxied body to DAO
+    lock ->> dao: 0x690102<br/>(ProxyMessage)<br/>with body<br/>0x690401<br/>(RequestNewProposal)
+    deactivate lock
+    activate dao
+    Note over dao: Deploy proposal contract with next proposal_id
+    create participant proposal as Proposal
+    dao ->> proposal: 0x690201<br/>(InitProposal)
+    deactivate dao
+    activate proposal
+    Note over proposal: Deploy voter contract with user address
+    create participant voter as Voter
+    proposal ->> voter: 0x690301<br/>(InitVoter)
+    deactivate proposal
+    activate voter
+    Note over voter: Save voted amount of tokens
+    deactivate voter
 
-    User -- 0x690101<0x690402> --> JettonLock;
-    JettonLock -- 0x690102<0x690402> --> Skipper;
-    Skipper -- 0x690402 --> Voter;
-    Voter -- 0x690302 --> Proposal;
+    Note left of wallet: VOTE FOR EXISTING PROPOSAL
+    wallet ->> lock: 0x690101<br/>(SendProxyMessage)<br/>with body<br/>0x690402<br/>(VoteForProposal)
+    activate lock
+    Note over lock: Pass proxied body to DAO
+    lock ->> dao: 0x690102<br/>(ProxyMessage)<br/>with body<br/>0x690402<br/>(VoteForProposal)
+    deactivate lock
+    activate dao
+    Note over dao: Send actual votes amount to proposal's voter
+    dao ->> voter: 0x690302<br/>(UpdateVoterBalance)
+    deactivate dao
+    activate voter
+    Note over voter: Compute new tokens amount as (new - previous)
+    Note over voter: Send new value to proposal
+    voter ->> proposal: 0x690202<br/>(UpdateVotes)
+    activate proposal
+    deactivate voter
+    Note over proposal: Update votes amount
+    deactivate proposal
 ```
