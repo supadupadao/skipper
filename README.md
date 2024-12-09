@@ -20,12 +20,13 @@ This is default Tact blueprint project with default commands:
 
 ## Contracts interaction
 
+### Lock tokens
+
 ```mermaid
 sequenceDiagram
     actor wallet as User TON wallet
     participant jetton as Governance token
 
-    Note left of wallet: LOCK TOKENS
     create participant lock as Jetton lock
     wallet ->> lock: Deploy
     wallet ->> jetton: 0x0f8a7ea5<br/>(JettonTransfer)
@@ -37,10 +38,16 @@ sequenceDiagram
     activate lock
     Note over lock: Save transfered amount
     deactivate lock
+```
 
+### Create new proposal
+
+```mermaid
+sequenceDiagram
+    actor wallet as User TON wallet
+    participant lock as Jetton lock
     participant dao as DAO
 
-    Note left of wallet: CREATE NEW PROPOSAL
     wallet ->> lock: 0x690101<br/>(SendProxyMessage)<br/>with body<br/>0x690401<br/>(RequestNewProposal)
     activate lock
     Note over lock: Pass proxied body to DAO
@@ -59,8 +66,18 @@ sequenceDiagram
     activate voter
     Note over voter: Save voted amount of tokens
     deactivate voter
+```
 
-    Note left of wallet: VOTE FOR EXISTING PROPOSAL
+### Vote for existing proposal
+
+```mermaid
+sequenceDiagram
+    actor wallet as User TON wallet
+    participant lock as Jetton lock
+    participant dao as DAO
+    participant voter as Voter
+    participant proposal as Proposal
+
     wallet ->> lock: 0x690101<br/>(SendProxyMessage)<br/>with body<br/>0x690402<br/>(VoteForProposal)
     activate lock
     Note over lock: Pass proxied body to DAO
