@@ -1,3 +1,4 @@
+import "./consts.tact";
 import "./errors.tact";
 import "./messages.tact";
 const PROPOSAL_ACCEPT_THRESHOLD: Int = ton("300000");
@@ -8,10 +9,12 @@ contract Proposal {
     proposal_id: Int as uint64;
     votes_yes: Int as coins = 0;
     votes_no: Int as coins = 0;
+    expired_at: Int as uint64;
     data: ProposalData? = null;
     init(master: Address, proposal_id: Int){
         self.master = master;
         self.proposal_id = proposal_id;
+        self.expired_at = now() + LOCK_INTERVAL;
     }
 
     receive(msg: InitProposal){
@@ -33,6 +36,7 @@ contract Proposal {
     }
 
     receive(msg: UpdateVotes){
+        nativeThrowUnless(ERROR_PROPOSAL_EXPIRED, now() < self.expired_at);
         let voter_init = initOf Voter(self.master, myAddress(), msg.owner);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == contractAddress(voter_init));
         if (msg.vote == 1) {
