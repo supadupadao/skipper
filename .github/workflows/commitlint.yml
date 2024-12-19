@@ -5,6 +5,8 @@ on:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
+  merge_group:
+    types: [ checks_requested ]
 
 jobs:
   commitlint:
@@ -18,6 +20,10 @@ jobs:
 
       - name: Validate current commit (last commit) with commitlint
         if: github.event_name == 'push'
+        run: npx commitlint --last --verbose
+
+      - name: Validate merge queue
+        if: github.event_name == 'merge_group'
         run: npx commitlint --last --verbose
 
       - name: Validate PR commits with commitlint
