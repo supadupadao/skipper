@@ -6,6 +6,7 @@ import { JettonMaster } from './JettonMaster';
 import { JettonWallet } from './JettonWallet';
 import { JettonLock } from '../wrappers/Lock';
 import { Proposal } from '../wrappers/Proposal';
+import { OP_CODES } from './constants/opCodes';
 
 describe('Integration tests', () => {
     let blockchain: Blockchain;
@@ -99,7 +100,7 @@ describe('Integration tests', () => {
                 $$type: 'SendProxyMessage',
                 to: skipper.address,
                 payload: beginCell()
-                    .storeUint(0x690401, 32)
+                    .storeUint(OP_CODES.RequestNewProposal, 32)
                     .storeAddress(deployer.address)
                     .storeRef(beginCell().endCell())
                     .asCell(),
@@ -109,25 +110,25 @@ describe('Integration tests', () => {
             from: deployer.address,
             to: lock.address,
             success: true,
-            op: 0x690101,
+            op: OP_CODES.SendProxyMessage,
         });
         expect(createProposalResult.transactions).toHaveTransaction({
             from: lock.address,
             to: skipper.address,
             success: true,
-            op: 0x690102,
+            op: OP_CODES.ProxyMessage,
         });
         expect(createProposalResult.transactions).toHaveTransaction({
             from: skipper.address,
             to: proposal.address,
             success: true,
-            op: 0x690201,
+            op: OP_CODES.InitProposal,
         });
         expect(createProposalResult.transactions).toHaveTransaction({
             from: proposal.address,
             // to: voter.address,
             success: true,
-            op: 0x690301,
+            op: OP_CODES.InitVoter,
         });
 
         const proposalData = await proposal.getGetProposalData();
@@ -145,7 +146,7 @@ describe('Integration tests', () => {
                 $$type: 'SendProxyMessage',
                 to: skipper.address,
                 payload: beginCell()
-                    .storeUint(0x690402, 32)
+                    .storeUint(OP_CODES.VoteForProposal, 32)
                     .storeUint(1, 64)
                     .storeUint(1, 1)
                     .asCell(),
@@ -155,25 +156,25 @@ describe('Integration tests', () => {
             from: deployer.address,
             to: lock.address,
             success: true,
-            op: 0x690101,
+            op: OP_CODES.SendProxyMessage,
         });
         expect(voteProposalResult.transactions).toHaveTransaction({
             from: lock.address,
             to: skipper.address,
             success: true,
-            op: 0x690102,
+            op: OP_CODES.ProxyMessage,
         });
         expect(voteProposalResult.transactions).toHaveTransaction({
             from: skipper.address,
             // to: voter.address,
             success: true,
-            op: 0x690302,
+            op: OP_CODES.UpdateVoterBalance,
         });
         expect(voteProposalResult.transactions).toHaveTransaction({
             // from: voter.address,
             to: proposal.address,
             success: true,
-            op: 0x690202,
+            op: OP_CODES.UpdateVotes,
         });
     });
 
@@ -191,7 +192,7 @@ describe('Integration tests', () => {
             from: deployer.address,
             to: proposal.address,
             success: true,
-            op: 0x690303,
+            op: OP_CODES.ExecuteProposal,
         });
         expect(executeResult.transactions).toHaveTransaction({
             from: proposal.address,
@@ -214,7 +215,7 @@ describe('Integration tests', () => {
             from: deployer.address,
             to: proposal.address,
             success: false,
-            op: 0x690303,
+            op: OP_CODES.ExecuteProposal,
             exitCode: 6908,
         });
     });

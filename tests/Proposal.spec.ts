@@ -3,6 +3,7 @@ import '@ton/test-utils';
 import { Proposal } from '../wrappers/Proposal';
 import { beginCell, toNano } from '@ton/core';
 import { Voter } from '../wrappers/Voter';
+import { OP_CODES } from './constants/opCodes';
 
 const LOCK_INTERVAL = 1209600;
 
@@ -44,7 +45,7 @@ describe('Proposal', () => {
             from: skipper.address,
             to: proposal.address,
             success: true,
-            op: 0x690201,
+            op: OP_CODES.InitProposal,
         });
 
         let otherInitResult = await proposal.send(
@@ -67,7 +68,7 @@ describe('Proposal', () => {
             from: skipper.address,
             to: proposal.address,
             success: false,
-            op: 0x690201,
+            op: OP_CODES.InitProposal,
             exitCode: 6906,
         });
     });
@@ -109,13 +110,13 @@ describe('Proposal', () => {
             from: skipper.address,
             to: voter.address,
             success: true,
-            op: 0x690302,
+            op: OP_CODES.UpdateVoterBalance,
         });
         expect(successUpdateVotesResult.transactions).toHaveTransaction({
             from: voter.address,
             to: proposal.address,
             success: true,
-            op: 0x690202,
+            op: OP_CODES.UpdateVotes,
         });
 
         blockchain.now = blockchain.now!! + LOCK_INTERVAL + 1;
@@ -135,13 +136,13 @@ describe('Proposal', () => {
             from: skipper.address,
             to: voter.address,
             success: true,
-            op: 0x690302,
+            op: OP_CODES.UpdateVoterBalance,
         });
         expect(failedUpdateVotesResult.transactions).toHaveTransaction({
             from: voter.address,
             to: proposal.address,
             success: false,
-            op: 0x690202,
+            op: OP_CODES.UpdateVotes,
             exitCode: 6907,
         });
     });

@@ -4,6 +4,7 @@ import { Blockchain, SandboxContract, TreasuryContract } from '@ton/sandbox';
 import { JettonLock } from '../wrappers/Lock';
 import { JettonMaster } from './JettonMaster';
 import { JettonWallet } from './JettonWallet';
+import { OP_CODES } from './constants/opCodes';
 
 const LOCK_INTERVAL = 1209600;
 const ZERO_ADDRESS = address("0:0000000000000000000000000000000000000000000000000000000000000000");
@@ -72,7 +73,7 @@ describe('Success lock behavior', () => {
         expect(transferNotification.transactions).toHaveTransaction({
             to: lock.address,
             success: true,
-            op: 0x7362d09c,
+            op: OP_CODES.JettonTransferNotification,
         });
 
         const lockData = await lock.getGetLockData();
@@ -97,15 +98,15 @@ describe('Success lock behavior', () => {
         expect(proxyResult.transactions).toHaveTransaction({
             from: deployer.address,
             to: lock.address,
-            op: 0x690101,
+            op: OP_CODES.SendProxyMessage,
             success: true,
         });
         expect(proxyResult.transactions).toHaveTransaction({
             from: lock.address,
             to: ZERO_ADDRESS,
-            op: 0x690102,
+            op: OP_CODES.ProxyMessage,
             body: beginCell()
-                .storeUint(0x690102, 32)
+                .storeUint(OP_CODES.ProxyMessage, 32)
                 .storeAddress(deployer.address)
                 .storeUint(blockchain.now!! + LOCK_INTERVAL, 64)
                 .storeCoins(toNano('100500'))
@@ -129,12 +130,12 @@ describe('Success lock behavior', () => {
             from: deployer.address,
             to: lock.address,
             success: true,
-            op: 0x690103,
+            op: OP_CODES.UnlockJettons,
         });
         expect(unlockResult.transactions).toHaveTransaction({
             from: lock.address,
             success: true,
-            op: 0x0f8a7ea5,
+            op: OP_CODES.JettonTransfer,
         });
     });
 });
@@ -201,7 +202,7 @@ describe('Error handling for lock', () => {
             to: lock.address,
             success: false,
             deploy: false,
-            op: 0x7362d09c,
+            op: OP_CODES.JettonTransferNotification,
             exitCode: 132,
         });
     });
@@ -223,7 +224,7 @@ describe('Error handling for lock', () => {
             to: lock.address,
             success: false,
             deploy: false,
-            op: 0x690101,
+            op: OP_CODES.SendProxyMessage,
             exitCode: 132,
         });
     });
@@ -245,7 +246,7 @@ describe('Error handling for lock', () => {
             to: lock.address,
             success: false,
             deploy: false,
-            op: 0x690101,
+            op: OP_CODES.SendProxyMessage,
             exitCode: 6901,
         });
     });
@@ -265,7 +266,7 @@ describe('Error handling for lock', () => {
             to: lock.address,
             success: false,
             deploy: false,
-            op: 0x690103,
+            op: OP_CODES.UnlockJettons,
             exitCode: 132,
         });
     });
@@ -285,7 +286,7 @@ describe('Error handling for lock', () => {
             to: lock.address,
             success: false,
             deploy: false,
-            op: 0x690103,
+            op: OP_CODES.UnlockJettons,
             exitCode: 6901,
         });
     });
@@ -313,7 +314,7 @@ describe('Error handling for lock', () => {
         expect(transferNotification.transactions).toHaveTransaction({
             to: lock.address,
             success: true,
-            op: 0x7362d09c,
+            op: OP_CODES.JettonTransferNotification,
         });
 
         const lockData = await lock.getGetLockData();
@@ -335,7 +336,7 @@ describe('Error handling for lock', () => {
             to: lock.address,
             success: false,
             deploy: false,
-            op: 0x690103,
+            op: OP_CODES.UnlockJettons,
             exitCode: 6902,
         });
     });
