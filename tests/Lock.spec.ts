@@ -1,13 +1,10 @@
 import '@ton/test-utils';
-import { address, beginCell, comment, toNano } from '@ton/core';
+import { beginCell, comment, toNano } from '@ton/core';
 import { Blockchain, SandboxContract, TreasuryContract } from '@ton/sandbox';
 import { JettonLock } from '../wrappers/Lock';
 import { JettonMaster } from './JettonMaster';
 import { JettonWallet } from './JettonWallet';
-import { OP_CODES } from './constants/opCodes';
-
-const LOCK_INTERVAL = 1209600;
-const ZERO_ADDRESS = address("0:0000000000000000000000000000000000000000000000000000000000000000");
+import { EXIT_CODES, LOCK_INTERVAL, OP_CODES, ZERO_ADDRESS } from './constants';
 
 describe('Success lock behavior', () => {
     let blockchain: Blockchain;
@@ -203,7 +200,7 @@ describe('Error handling for lock', () => {
             success: false,
             deploy: false,
             op: OP_CODES.JettonTransferNotification,
-            exitCode: 132,
+            exitCode: EXIT_CODES.InvalidOwner,
         });
     });
 
@@ -225,7 +222,7 @@ describe('Error handling for lock', () => {
             success: false,
             deploy: false,
             op: OP_CODES.SendProxyMessage,
-            exitCode: 132,
+            exitCode: EXIT_CODES.InvalidOwner,
         });
     });
 
@@ -247,7 +244,7 @@ describe('Error handling for lock', () => {
             success: false,
             deploy: false,
             op: OP_CODES.SendProxyMessage,
-            exitCode: 6901,
+            exitCode: EXIT_CODES.NeedFee,
         });
     });
 
@@ -267,7 +264,7 @@ describe('Error handling for lock', () => {
             success: false,
             deploy: false,
             op: OP_CODES.UnlockJettons,
-            exitCode: 132,
+            exitCode: EXIT_CODES.InvalidOwner,
         });
     });
 
@@ -287,7 +284,7 @@ describe('Error handling for lock', () => {
             success: false,
             deploy: false,
             op: OP_CODES.UnlockJettons,
-            exitCode: 6901,
+            exitCode: EXIT_CODES.NeedFee,
         });
     });
 
@@ -337,7 +334,7 @@ describe('Error handling for lock', () => {
             success: false,
             deploy: false,
             op: OP_CODES.UnlockJettons,
-            exitCode: 6902,
+            exitCode: EXIT_CODES.UnlockDateNotArrived,
         });
     });
 });
