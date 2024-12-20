@@ -3,9 +3,7 @@ import '@ton/test-utils';
 import { Proposal } from '../wrappers/Proposal';
 import { beginCell, toNano } from '@ton/core';
 import { Voter } from '../wrappers/Voter';
-import { OP_CODES } from './constants/opCodes';
-
-const LOCK_INTERVAL = 1209600;
+import { EXIT_CODES, LOCK_INTERVAL, OP_CODES } from './constants';
 
 describe('Proposal', () => {
     let blockchain: Blockchain;
@@ -69,7 +67,7 @@ describe('Proposal', () => {
             to: proposal.address,
             success: false,
             op: OP_CODES.InitProposal,
-            exitCode: 6906,
+            exitCode: EXIT_CODES.AlreadyInitialized,
         });
     });
 
@@ -143,7 +141,7 @@ describe('Proposal', () => {
             to: proposal.address,
             success: false,
             op: OP_CODES.UpdateVotes,
-            exitCode: 6907,
+            exitCode: EXIT_CODES.ProposalExpired,
         });
     });
 });

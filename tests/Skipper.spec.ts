@@ -6,7 +6,7 @@ import { JettonMaster } from './JettonMaster';
 import { JettonWallet } from './JettonWallet';
 import { JettonLock } from '../wrappers/Lock';
 import { Proposal } from '../wrappers/Proposal';
-import { OP_CODES } from './constants/opCodes';
+import { EXIT_CODES, OP_CODES } from './constants';
 
 describe('Integration tests', () => {
     let blockchain: Blockchain;
@@ -216,7 +216,7 @@ describe('Integration tests', () => {
             to: proposal.address,
             success: false,
             op: OP_CODES.ExecuteProposal,
-            exitCode: 6908,
+            exitCode: EXIT_CODES.AlreadyExecuted,
         });
     });
 });

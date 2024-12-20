@@ -1,3 +1,8 @@
+import { address } from "@ton/core";
+
+export const LOCK_INTERVAL = 1209600;
+export const ZERO_ADDRESS = address("0:0000000000000000000000000000000000000000000000000000000000000000");
+
 export const OP_CODES = {
     /* Standard jetton messages */
     JettonTransferNotification: 0x7362d09c, // Notification about transfer from jetton wallet to owner
@@ -16,4 +21,16 @@ export const OP_CODES = {
     /* 04 - Skipper */
     RequestNewProposal: 0x690401,           // Create new proposal
     VoteForProposal: 0x690402,              // Vote for proposal
+};
+
+export const EXIT_CODES = {
+    InvalidOwner: 132,
+    NeedFee: 6901,
+    UnlockDateNotArrived: 6902,
+    NoEnoughVotes: 6903, // TODO no tests
+    TooManyNoVotes: 6904, // TODO no tests
+    NotInitialized: 6905, // TODO no tests
+    AlreadyInitialized: 6906,
+    ProposalExpired: 6907,
+    AlreadyExecuted: 6908,
 };
