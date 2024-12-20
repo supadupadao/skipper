@@ -45,9 +45,7 @@ describe('Proposal', () => {
             }
         );
 
-        blockchain.now = blockchain.now!! + LOCK_INTERVAL + 1;
-
-        let updateVotesResult = await voter.send(
+        let successUpdateVotesResult = await voter.send(
             skipper.getSender(),
             {
                 value: toNano("0.05"),
@@ -58,13 +56,39 @@ describe('Proposal', () => {
                 amount: toNano("100500"),
             }
         );
-        expect(updateVotesResult.transactions).toHaveTransaction({
+        expect(successUpdateVotesResult.transactions).toHaveTransaction({
             from: skipper.address,
             to: voter.address,
             success: true,
             op: 0x690302,
         });
-        expect(updateVotesResult.transactions).toHaveTransaction({
+        expect(successUpdateVotesResult.transactions).toHaveTransaction({
+            from: voter.address,
+            to: proposal.address,
+            success: true,
+            op: 0x690202,
+        });
+
+        blockchain.now = blockchain.now!! + LOCK_INTERVAL + 1;
+
+        let failedUpdateVotesResult = await voter.send(
+            skipper.getSender(),
+            {
+                value: toNano("0.05"),
+            },
+            {
+                $$type: "UpdateVoterBalance",
+                vote: 1n,
+                amount: toNano("100500"),
+            }
+        );
+        expect(failedUpdateVotesResult.transactions).toHaveTransaction({
+            from: skipper.address,
+            to: voter.address,
+            success: true,
+            op: 0x690302,
+        });
+        expect(failedUpdateVotesResult.transactions).toHaveTransaction({
             from: voter.address,
             to: proposal.address,
             success: false,
