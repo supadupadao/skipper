@@ -10,5 +10,9 @@ const ERROR_NO_ENOGH_VOTES: Int = 6903;
 const ERROR_TOO_MANY_NO_VOTES: Int = 6904;
 // Contract is not initialized (if it can)
 const ERROR_NOT_INITIALIZED: Int = 6905;
+/// Contract already initialized (to avoid double initialization)
+const ERROR_ALREADY_INITIALIZED: Int = 6906;
 // Voting period for proposal has expired
-const ERROR_PROPOSAL_EXPIRED: Int = 6906;
+const ERROR_PROPOSAL_EXPIRED: Int = 6907;
+// Proposal already executed (to avoid double execution)
+const ERROR_ALREADY_EXECUTED: Int = 6908;
