@@ -7,6 +7,8 @@ const PROPOSAL_VOTES_GAP: Int = ton("10000");
 contract Proposal {
     master: Address;
     proposal_id: Int as uint64;
+    is_initialized: Bool = false;
+    is_executed: Bool = false;
     votes_yes: Int as coins = 0;
     votes_no: Int as coins = 0;
     expired_at: Int as uint64;
@@ -19,10 +21,12 @@ contract Proposal {
 
     receive(msg: InitProposal){
         // TODO check fees
+        nativeThrowIf(ERROR_ALREADY_INITIALIZED, self.is_initialized);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);
         self.data = msg.data;
         self.votes_yes = msg.amount;
         let voter_init: StateInit = initOf Voter(self.master, myAddress(), msg.initiator);
+        self.is_initialized = true;
         send(SendParameters{ // TODO update value
                 to: contractAddress(voter_init),
                 value: 0,
@@ -36,6 +40,8 @@ contract Proposal {
     }
 
     receive(msg: UpdateVotes){
+        nativeThrowUnless(ERROR_NOT_INITIALIZED, self.is_initialized);
+        nativeThrowIf(ERROR_ALREADY_EXECUTED, self.is_executed);
         nativeThrowUnless(ERROR_PROPOSAL_EXPIRED, now() < self.expired_at);
         let voter_init = initOf Voter(self.master, myAddress(), msg.owner);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == contractAddress(voter_init));
@@ -48,9 +54,12 @@ contract Proposal {
     }
 
     receive(msg: ExecuteProposal){
+        nativeThrowUnless(ERROR_NOT_INITIALIZED, self.is_initialized);
+        nativeThrowIf(ERROR_ALREADY_EXECUTED, self.is_executed);
         nativeThrowUnless(ERROR_NO_ENOGH_VOTES, self.votes_yes > PROPOSAL_ACCEPT_THRESHOLD);
         nativeThrowUnless(ERROR_TOO_MANY_NO_VOTES, self.votes_yes > (self.votes_no + PROPOSAL_VOTES_GAP));
         nativeThrowUnless(ERROR_NOT_INITIALIZED, self.data != null);
+        self.is_executed = true;
         send(SendParameters{
                 to: self.data!!.receiver,
                 value: 0,

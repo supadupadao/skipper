@@ -198,5 +198,24 @@ describe('Integration tests', () => {
             to: deployer.address,
             success: true,
         });
-    })
+    });
+
+    it('should not double execute proposal', async () => {
+        const executeResult = await proposal.send(
+            deployer.getSender(),
+            {
+                value: toNano("0.05"),
+            },
+            {
+                $$type: 'ExecuteProposal',
+            }
+        );
+        expect(executeResult.transactions).toHaveTransaction({
+            from: deployer.address,
+            to: proposal.address,
+            success: false,
+            op: 0x690303,
+            exitCode: 6908,
+        });
+    });
 });

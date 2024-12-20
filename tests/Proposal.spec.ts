@@ -13,7 +13,7 @@ describe('Proposal', () => {
     let voter: SandboxContract<Voter>;
     let proposal: SandboxContract<Proposal>;
 
-    beforeAll(async () => {
+    beforeEach(async () => {
         blockchain = await Blockchain.create();
 
         deployer = await blockchain.treasury('deployer');
@@ -21,6 +21,55 @@ describe('Proposal', () => {
 
         proposal = blockchain.openContract(await Proposal.fromInit(skipper.address, 1n));
         voter = blockchain.openContract(await Voter.fromInit(skipper.address, proposal.address, deployer.address));
+    });
+
+    it('should not double init proposal', async () => {
+        let firstInitResult = await proposal.send(
+            skipper.getSender(),
+            {
+                value: toNano("0.05"),
+            },
+            {
+                $$type: "InitProposal",
+                amount: toNano("100500"),
+                initiator: deployer.address,
+                data: {
+                    $$type: 'ProposalData',
+                    body: beginCell().asCell(),
+                    receiver: deployer.address,
+                }
+            }
+        );
+        expect(firstInitResult.transactions).toHaveTransaction({
+            from: skipper.address,
+            to: proposal.address,
+            success: true,
+            op: 0x690201,
+        });
+
+        let otherInitResult = await proposal.send(
+            skipper.getSender(),
+            {
+                value: toNano("0.05"),
+            },
+            {
+                $$type: "InitProposal",
+                amount: toNano("100500"),
+                initiator: deployer.address,
+                data: {
+                    $$type: 'ProposalData',
+                    body: beginCell().asCell(),
+                    receiver: deployer.address,
+                }
+            }
+        );
+        expect(otherInitResult.transactions).toHaveTransaction({
+            from: skipper.address,
+            to: proposal.address,
+            success: false,
+            op: 0x690201,
+            exitCode: 6906,
+        });
     });
 
     it('should not allow voting after expired', async () => {
@@ -93,7 +142,7 @@ describe('Proposal', () => {
             to: proposal.address,
             success: false,
             op: 0x690202,
-            exitCode: 6906,
+            exitCode: 6907,
         });
     });
 });
