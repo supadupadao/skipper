@@ -10,13 +10,17 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [ 22 ]
+        os: [ ubuntu-latest ]
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
       with:
-        node-version: 22
+        node-version: ${{ matrix.node-version }}
 
     - name: NPM Install
       run: npm install
@@ -28,10 +32,11 @@ jobs:
       run: npm test
 
     - name: Install Soufflé
+      if: matrix.os == 'ubuntu-latest'
       run:  wget https://souffle-lang.github.io/ppa/souffle-key.public -O /usr/share/keyrings/souffle-archive-keyring.gpg && \
             echo "deb [signed-by=/usr/share/keyrings/souffle-archive-keyring.gpg] https://souffle-lang.github.io/ppa/ubuntu/ stable main" | sudo tee /etc/apt/sources.list.d/souffle.list && \
-            apt-get update && \
-            apt-get install souffle
+            sudo apt update && \
+            sudo apt install souffle
 
     - name: Run Misti
       run: npx blueprint misti
