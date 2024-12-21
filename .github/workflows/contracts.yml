@@ -30,8 +30,8 @@ jobs:
     - name: Install Soufflé
       run:  wget https://souffle-lang.github.io/ppa/souffle-key.public -O /usr/share/keyrings/souffle-archive-keyring.gpg && \
             echo "deb [signed-by=/usr/share/keyrings/souffle-archive-keyring.gpg] https://souffle-lang.github.io/ppa/ubuntu/ stable main" | sudo tee /etc/apt/sources.list.d/souffle.list && \
-            apt update && \
-            apt install souffle
+            apt-get update && \
+            apt-get install souffle
 
     - name: Run Misti
       run: npx blueprint misti
