@@ -50,7 +50,7 @@ contract Skipper with Deployable {
             );
             return;
         }
-        nativeThrow(404);
+        nativeThrow(ERROR_PROXY_OPCODE_NOT_FOUND);
     }
 
     get fun get_skipper_data(): SkipperData {
