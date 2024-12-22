@@ -16,3 +16,5 @@ const ERROR_ALREADY_INITIALIZED: Int = 6906;
 const ERROR_PROPOSAL_EXPIRED: Int = 6907;
 // Proposal already executed (to avoid double execution)
 const ERROR_ALREADY_EXECUTED: Int = 6908;
+// OP code not found for proxy message
+const ERROR_PROXY_OPCODE_NOT_FOUND: Int = 6909;
