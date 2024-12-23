@@ -56,4 +56,9 @@ contract Skipper with Deployable {
     get fun get_skipper_data(): SkipperData {
         return SkipperData{last_proposal_id: self.last_proposal_id};
     }
+
+    get fun get_proposal_address(proposal_id: Int): Address {
+        let init = initOf Proposal(myAddress(), proposal_id);
+        return contractAddress(init);
+    }
 }

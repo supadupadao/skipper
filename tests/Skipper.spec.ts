@@ -219,4 +219,9 @@ describe('Integration tests', () => {
             exitCode: EXIT_CODES.AlreadyExecuted,
         });
     });
+
+    it('should compute proposal address', async () => {
+        let proposal_address = await skipper.getGetProposalAddress(1n);
+        expect(proposal_address).toEqualAddress(proposal.address);
+    });
 });
