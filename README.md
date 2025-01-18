@@ -1,6 +1,6 @@
 # Skipper 🐧
 
-[![Build status](https://img.shields.io/github/actions/workflow/status/supadupadao/skipper/contracts.yml?label=CI)](https://github.com/supadupadao/skipper/actions/workflows/contracts.yml)
+[![Build status](https://img.shields.io/github/actions/workflow/status/supadupadao/skipper/ci.yml?label=CI)](https://github.com/supadupadao/skipper/actions/workflows/ci.yml)
 [![GitHub License](https://img.shields.io/github/license/supadupadao/skipper)](https://github.com/supadupadao/skipper/blob/master/LICENSE)
 [![TON](https://img.shields.io/badge/blockchain-TON-0098EA)](https://ton.org)
 [![Tact](https://img.shields.io/badge/lang-Tact-000000)](https://github.com/tact-lang/tact)
