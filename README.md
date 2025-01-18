@@ -1,5 +1,11 @@
 # Skipper 🐧
 
+[![Build status](https://img.shields.io/github/actions/workflow/status/supadupadao/skipper/contracts.yml?label=CI)](https://github.com/supadupadao/skipper/actions/workflows/contracts.yml)
+[![GitHub License](https://img.shields.io/github/license/supadupadao/skipper)](https://github.com/supadupadao/skipper/blob/master/LICENSE)
+[![TON](https://img.shields.io/badge/blockchain-TON-0098EA)](https://ton.org)
+[![Tact](https://img.shields.io/badge/lang-Tact-000000)](https://github.com/tact-lang/tact)
+[![Work in progress](https://img.shields.io/badge/WORK%20IN%20PROGRESS-DO%20NOT%20USE%20IN%20PRODUCTION-ff0000)](https://github.com/supadupadao/jetton/issues)
+
 ℹ️ Fully decentralized application for DAO managing on TON blockchain using governance tokens (jettons).
 
 ⚠️ <b>Warning! Work in progress!</b> Development of this project is not done!
