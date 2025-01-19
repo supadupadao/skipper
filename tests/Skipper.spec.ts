@@ -224,4 +224,9 @@ describe('Integration tests', () => {
         let proposal_address = await skipper.getGetProposalAddress(1n);
         expect(proposal_address).toEqualAddress(proposal.address);
     });
+
+    it('should compute lock address', async () => {
+        let lock_address = await skipper.getGetLockAddress(deployer.address);
+        expect(lock_address).toEqualAddress(lock.address);
+    });
 });

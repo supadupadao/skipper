@@ -61,4 +61,9 @@ contract Skipper with Deployable {
         let init = initOf Proposal(myAddress(), proposal_id);
         return contractAddress(init);
     }
+
+    get fun get_lock_address(owner: Address): Address {
+        let init = initOf JettonLock(owner, self.jetton_master);
+        return contractAddress(init);
+    }
 }
