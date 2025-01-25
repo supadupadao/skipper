@@ -26,7 +26,7 @@ describe('Integration tests', () => {
         jetton_wallet = blockchain.openContract(await JettonWallet.fromInit(jetton_master.address, deployer.address));
         skipper = blockchain.openContract(await Skipper.fromInit(jetton_master.address));
         lock = blockchain.openContract(await JettonLock.fromInit(deployer.address, jetton_master.address));
-        proposal = blockchain.openContract(await Proposal.fromInit(skipper.address, 1n));
+        proposal = blockchain.openContract(await Proposal.fromInit(skipper.address, 1n, null));
 
         const deployResult = await skipper.send(
             deployer.getSender(),

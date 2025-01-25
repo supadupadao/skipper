@@ -21,7 +21,7 @@ contract Skipper with Deployable {
         if (op == 0x690401) {
             let payload = RequestNewProposal.fromCell(msg.payload);
             self.last_proposal_id += 1;
-            let new_proposal_init = initOf Proposal(myAddress(), self.last_proposal_id);
+            let new_proposal_init = initOf Proposal(myAddress(), self.last_proposal_id , null);
             send(SendParameters{
                     to: contractAddress(new_proposal_init),
                     value: 0,
@@ -36,7 +36,7 @@ contract Skipper with Deployable {
         }
         if (op == 0x690402) {
             let payload = VoteForProposal.fromCell(msg.payload);
-            let proposal_init = initOf Proposal(myAddress(), payload.proposal_id);
+            let proposal_init = initOf Proposal(myAddress(), payload.proposal_id , null);
             let voter_init = initOf Voter(myAddress(), contractAddress(proposal_init), msg.owner);
             send(SendParameters{
                     to: contractAddress(voter_init),
@@ -58,7 +58,7 @@ contract Skipper with Deployable {
     }
 
     get fun get_proposal_address(proposal_id: Int): Address {
-        let init = initOf Proposal(myAddress(), proposal_id);
+        let init = initOf Proposal(myAddress(), proposal_id, null);
         return contractAddress(init);
     }
 

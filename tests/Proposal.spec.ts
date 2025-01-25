@@ -18,7 +18,7 @@ describe('Proposal', () => {
         deployer = await blockchain.treasury('deployer');
         skipper = await blockchain.treasury('skipper');
 
-        proposal = blockchain.openContract(await Proposal.fromInit(skipper.address, 1n));
+        proposal = blockchain.openContract(await Proposal.fromInit(skipper.address, 1n, null));
         voter = blockchain.openContract(await Voter.fromInit(skipper.address, proposal.address, deployer.address));
     });
 

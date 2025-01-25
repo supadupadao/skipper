@@ -13,10 +13,22 @@ contract Proposal {
     votes_no: Int as coins = 0;
     expired_at: Int as uint64;
     data: ProposalData? = null;
-    init(master: Address, proposal_id: Int){
+    
+    init(master: Address, proposal_id: Int, expired_at: Int?) {
         self.master = master;
         self.proposal_id = proposal_id;
-        self.expired_at = now() + LOCK_INTERVAL;
+
+        // Calculate the expiration time
+
+        if (expired_at != null && 
+            expired_at!! > 0 && 
+            expired_at!! > now() + LOCK_MIN_INTERVAL)
+        {
+            self.expired_at = expired_at!!;
+        } else {
+            let defaultLock = now() + LOCK_INTERVAL;
+            self.expired_at = defaultLock;
+        }
     }
 
     receive(msg: InitProposal){
@@ -72,6 +84,10 @@ contract Proposal {
 
     get fun get_proposal_data(): ProposalData? {
         return self.data;
+    }
+    
+    get fun expired_at(): Int {
+        return self.expired_at;
     }
 }
 
