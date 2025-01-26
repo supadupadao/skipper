@@ -57,8 +57,10 @@ contract JettonLock with Deployable {
             if (calculatedUnlockDate > self.unlock_date) {
                 self.unlock_date = calculatedUnlockDate;
             }
+        }else  if (op == 0x690402){
+            // set extra lock time if value is passed
         }
-        
+
         send(SendParameters{
                 to: msg.to,
                 value: 0,
