@@ -2,6 +2,7 @@ import "@stdlib/deploy";
 import "./consts.tact";
 import "./errors.tact";
 import "./messages.tact";
+import "./proposal.tact";
 
 fun computeJettonWalletStateInit(master: Address, owner: Address): StateInit {
     let data = beginCell().storeRef(JETTON_SYSTEM_CELL).storeUint(0, 1).storeAddress(master).storeAddress(owner
@@ -37,7 +38,27 @@ contract JettonLock with Deployable {
         let ctx = context();
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.owner);
         nativeThrowUnless(ERROR_CODE_NEED_FEE, ctx.value >= MIN_LOCK_FEE);
-        self.unlock_date = now() + LOCK_INTERVAL;
+        //self.unlock_date = now() + LOCK_INTERVAL;
+
+        let op = msg.payload.asSlice().loadUint(32);
+        if (op == 0x690401){
+            // Read the ref cell and load optional `daysToLock` as uint
+            let refSlice = msg.payload.asSlice().loadRef().beginParse();
+            let expires_in = refSlice.loadUint(32);
+
+            // Calculate the new potential `unlock_date` based on `expires_in` or defaults
+            let calculatedUnlockDate: Int = now() + (
+                expires_in > 0
+                    ? (expires_in >= LOCK_MIN_INTERVAL ? expires_in : LOCK_MIN_INTERVAL) // Use `expires_in` or `LOCK_MIN_INTERVAL`
+                    : LOCK_INTERVAL // Default lock interval
+            );
+
+            // Update `unlock_date` only if the calculated value is higher
+            if (calculatedUnlockDate > self.unlock_date) {
+                self.unlock_date = calculatedUnlockDate;
+            }
+        }
+        
         send(SendParameters{
                 to: msg.to,
                 value: 0,
@@ -79,5 +100,10 @@ contract JettonLock with Deployable {
 
     get fun get_lock_data(): LockData {
         return LockData{amount: self.amount, unlock_date: self.unlock_date, owner: self.owner};
+    }
+
+    get fun get_proposal_address(owner: Address, proposal_id: Int): Address {
+        let init = initOf Proposal(owner, proposal_id);
+        return contractAddress(init);
     }
 }

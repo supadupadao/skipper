@@ -18,3 +18,5 @@ const ERROR_PROPOSAL_EXPIRED: Int = 6907;
 const ERROR_ALREADY_EXECUTED: Int = 6908;
 // OP code not found for proxy message
 const ERROR_PROXY_OPCODE_NOT_FOUND: Int = 6909;
+// Unlock date is insufficient to cover proposal expiration date
+const  ERROR_UNLOCK_DATE_INSUFFICIENT: Int = 69010;

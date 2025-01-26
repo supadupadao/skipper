@@ -11,24 +11,13 @@ contract Proposal {
     is_executed: Bool = false;
     votes_yes: Int as coins = 0;
     votes_no: Int as coins = 0;
-    expired_at: Int as uint64;
+    expires_at: Int as uint64;
     data: ProposalData? = null;
     
-    init(master: Address, proposal_id: Int, expired_at: Int?) {
+    init(master: Address, proposal_id: Int) {
         self.master = master;
         self.proposal_id = proposal_id;
-
-        // Calculate the expiration time
-
-        if (expired_at != null && 
-            expired_at!! > 0 && 
-            expired_at!! > now() + LOCK_MIN_INTERVAL)
-        {
-            self.expired_at = expired_at!!;
-        } else {
-            let defaultLock = now() + LOCK_INTERVAL;
-            self.expired_at = defaultLock;
-        }
+        self.expires_at = now() + LOCK_INTERVAL;
     }
 
     receive(msg: InitProposal){
@@ -39,6 +28,19 @@ contract Proposal {
         self.votes_yes = msg.amount;
         let voter_init: StateInit = initOf Voter(self.master, myAddress(), msg.initiator);
         self.is_initialized = true;
+
+        // Calculate the expiration time
+        if (msg.expires_in > 0){
+            if(now() + msg.expires_in > now() + LOCK_MIN_INTERVAL) {
+                self.expires_at = now() + msg.expires_in;
+            }else {
+                self.expires_at = now() + LOCK_MIN_INTERVAL;
+            }            
+        } else {
+            let defaultLock = now() + LOCK_INTERVAL;
+            self.expires_at = defaultLock;
+        }
+        
         send(SendParameters{ // TODO update value
                 to: contractAddress(voter_init),
                 value: 0,
@@ -54,7 +56,11 @@ contract Proposal {
     receive(msg: UpdateVotes){
         nativeThrowUnless(ERROR_NOT_INITIALIZED, self.is_initialized);
         nativeThrowIf(ERROR_ALREADY_EXECUTED, self.is_executed);
-        nativeThrowUnless(ERROR_PROPOSAL_EXPIRED, now() < self.expired_at);
+        nativeThrowUnless(ERROR_PROPOSAL_EXPIRED, now() < self.expires_at);
+
+         // Check if unlock_date covers the proposal's expires_at
+        nativeThrowUnless(ERROR_UNLOCK_DATE_INSUFFICIENT, msg.unlock_date >= self.expires_at);
+
         let voter_init = initOf Voter(self.master, myAddress(), msg.owner);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == contractAddress(voter_init));
         if (msg.vote == 1) {
@@ -86,8 +92,8 @@ contract Proposal {
         return self.data;
     }
     
-    get fun expired_at(): Int {
-        return self.expired_at;
+    get fun expires_at(): Int {
+        return self.expires_at;
     }
 }
 
@@ -109,12 +115,17 @@ contract Voter {
     }
 
     receive(msg: UpdateVoterBalance){
-        nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);
+        nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);       
         send(SendParameters{
                 to: self.proposal,
                 value: 0,
                 mode: SendRemainingValue,
-                body: UpdateVotes{owner: self.owner, amount: msg.amount - self.amount, vote: msg.vote}.toCell()
+                body: UpdateVotes{
+                    owner: self.owner, 
+                    amount: msg.amount - self.amount,
+                    vote: msg.vote,
+                    unlock_date: msg.unlock_date
+                }.toCell()
             }
         );
     }

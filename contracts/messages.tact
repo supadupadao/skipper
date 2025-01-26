@@ -37,12 +37,15 @@ message(0x690201) InitProposal {
     initiator: Address;
     amount: Int as coins;
     data: ProposalData;
+    expires_in: Int as uint32;
 }
 message(0x690202) UpdateVotes {
     owner: Address;
     amount: Int as coins;
     vote: Int as uint1; // true = 1 | false = 0
+    unlock_date: Int as uint64;
 }
+
 message(0x690203) ExecuteProposal {
 }
 /* 03 - Voter */
@@ -52,6 +55,7 @@ message(0x690301) InitVoter {
 message(0x690302) UpdateVoterBalance {
     amount: Int as coins;
     vote: Int as uint1; // true = 1 | false = 0
+    unlock_date: Int as uint64;
 }
 /* 04 - Skipper */
 message(0x690401) RequestNewProposal {
