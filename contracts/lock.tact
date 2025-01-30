@@ -103,9 +103,4 @@ contract JettonLock with Deployable {
     get fun get_lock_data(): LockData {
         return LockData{amount: self.amount, unlock_date: self.unlock_date, owner: self.owner};
     }
-
-    get fun get_proposal_address(owner: Address, proposal_id: Int): Address {
-        let init = initOf Proposal(owner, proposal_id);
-        return contractAddress(init);
-    }
 }
