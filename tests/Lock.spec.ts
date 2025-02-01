@@ -1,6 +1,6 @@
 import '@ton/test-utils';
-import { beginCell, comment, toNano } from '@ton/core';
-import { Blockchain, SandboxContract, TreasuryContract } from '@ton/sandbox';
+import { beginCell, comment, toNano , Cell  } from '@ton/core';
+import { Blockchain, SandboxContract, TreasuryContract  } from '@ton/sandbox';
 import { JettonLock } from '../wrappers/Lock';
 import { JettonMaster } from './JettonMaster';
 import { JettonWallet } from './JettonWallet';
@@ -78,9 +78,11 @@ describe('Success lock behavior', () => {
         expect(lockData.owner.toString()).toEqual(deployer.address.toString());
         expect(lockData.unlock_date).toEqual(BigInt(blockchain.now + LOCK_INTERVAL));
     });
+   
 
     it('should proxy message', async () => {
         const messagePayload = beginCell().storeUint(1337, 256).asCell();
+
         const proxyResult = await lock.send(
             deployer.getSender(),
             {
@@ -90,6 +92,7 @@ describe('Success lock behavior', () => {
                 $$type: 'SendProxyMessage',
                 to: ZERO_ADDRESS,
                 payload: messagePayload,
+                lock_period: BigInt(LOCK_INTERVAL)
             }
         );
         expect(proxyResult.transactions).toHaveTransaction({
@@ -97,17 +100,19 @@ describe('Success lock behavior', () => {
             to: lock.address,
             op: OP_CODES.SendProxyMessage,
             success: true,
-        });
+        });        
+        
         expect(proxyResult.transactions).toHaveTransaction({
             from: lock.address,
             to: ZERO_ADDRESS,
             op: OP_CODES.ProxyMessage,
             body: beginCell()
-                .storeUint(OP_CODES.ProxyMessage, 32)
-                .storeAddress(deployer.address)
-                .storeUint(blockchain.now!! + LOCK_INTERVAL, 64)
-                .storeCoins(toNano('100500'))
-                .storeRef(messagePayload)
+                .storeUint(OP_CODES.ProxyMessage, 32)               //Message code
+                .storeAddress(deployer.address)                     //Owner
+                .storeMaybeUint(LOCK_INTERVAL,64)                   //lock_period , option used for init a new proposal
+                .storeUint(blockchain.now!! + LOCK_INTERVAL, 64)    //voter_unlock_date , used to check before voting
+                .storeCoins(toNano('100500'))                       //amount
+                .storeRef(messagePayload)                           //payload
                 .endCell()
         });
     });
@@ -214,6 +219,7 @@ describe('Error handling for lock', () => {
                 $$type: 'SendProxyMessage',
                 to: ZERO_ADDRESS,
                 payload: beginCell().endCell(),
+                lock_period: null
             }
         );
         expect(proxyResult.transactions).toHaveTransaction({
@@ -236,6 +242,7 @@ describe('Error handling for lock', () => {
                 $$type: 'SendProxyMessage',
                 to: ZERO_ADDRESS,
                 payload: beginCell().endCell(),
+                lock_period: null
             }
         );
         expect(proxyResult.transactions).toHaveTransaction({
