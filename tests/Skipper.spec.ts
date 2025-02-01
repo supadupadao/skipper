@@ -6,7 +6,7 @@ import { JettonMaster } from './JettonMaster';
 import { JettonWallet } from './JettonWallet';
 import { JettonLock } from '../wrappers/Lock';
 import { Proposal } from '../wrappers/Proposal';
-import { EXIT_CODES, OP_CODES } from './constants';
+import { EXIT_CODES, LOCK_INTERVAL, OP_CODES } from './constants';
 
 describe('Integration tests', () => {
     let blockchain: Blockchain;
@@ -26,7 +26,7 @@ describe('Integration tests', () => {
         jetton_wallet = blockchain.openContract(await JettonWallet.fromInit(jetton_master.address, deployer.address));
         skipper = blockchain.openContract(await Skipper.fromInit(jetton_master.address));
         lock = blockchain.openContract(await JettonLock.fromInit(deployer.address, jetton_master.address));
-        proposal = blockchain.openContract(await Proposal.fromInit(skipper.address, 1n, null));
+        proposal = blockchain.openContract(await Proposal.fromInit(skipper.address, 1n));
 
         const deployResult = await skipper.send(
             deployer.getSender(),
@@ -90,6 +90,7 @@ describe('Integration tests', () => {
         expect(lockData.amount).toEqual(toNano('1337000'));
     });
 
+    
     it('should create proposal', async () => {
         const createProposalResult = await lock.send(
             deployer.getSender(),
@@ -99,6 +100,7 @@ describe('Integration tests', () => {
             {
                 $$type: 'SendProxyMessage',
                 to: skipper.address,
+                lock_period: null,
                 payload: beginCell()
                     .storeUint(OP_CODES.RequestNewProposal, 32)
                     .storeAddress(deployer.address)
@@ -145,6 +147,7 @@ describe('Integration tests', () => {
             {
                 $$type: 'SendProxyMessage',
                 to: skipper.address,
+                lock_period: BigInt(LOCK_INTERVAL),
                 payload: beginCell()
                     .storeUint(OP_CODES.VoteForProposal, 32)
                     .storeUint(1, 64)

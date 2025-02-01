@@ -18,7 +18,7 @@ describe('Proposal', () => {
         deployer = await blockchain.treasury('deployer');
         skipper = await blockchain.treasury('skipper');
 
-        proposal = blockchain.openContract(await Proposal.fromInit(skipper.address, 1n, null));
+        proposal = blockchain.openContract(await Proposal.fromInit(skipper.address, 1n));
         voter = blockchain.openContract(await Voter.fromInit(skipper.address, proposal.address, deployer.address));
     });
 
@@ -32,6 +32,7 @@ describe('Proposal', () => {
                 $$type: "InitProposal",
                 amount: toNano("100500"),
                 initiator: deployer.address,
+                lock_period: null,
                 data: {
                     $$type: 'ProposalData',
                     body: beginCell().asCell(),
@@ -55,6 +56,7 @@ describe('Proposal', () => {
                 $$type: "InitProposal",
                 amount: toNano("100500"),
                 initiator: deployer.address,
+                lock_period: null,
                 data: {
                     $$type: 'ProposalData',
                     body: beginCell().asCell(),
@@ -85,6 +87,7 @@ describe('Proposal', () => {
                 $$type: "InitProposal",
                 amount: toNano("100500"),
                 initiator: deployer.address,
+                lock_period: null,
                 data: {
                     $$type: 'ProposalData',
                     body: beginCell().asCell(),
@@ -102,6 +105,7 @@ describe('Proposal', () => {
                 $$type: "UpdateVoterBalance",
                 vote: 1n,
                 amount: toNano("100500"),
+                voter_unlock_date: BigInt(startTime + LOCK_INTERVAL),                
             }
         );
         expect(successUpdateVotesResult.transactions).toHaveTransaction({
@@ -128,6 +132,7 @@ describe('Proposal', () => {
                 $$type: "UpdateVoterBalance",
                 vote: 1n,
                 amount: toNano("100500"),
+                voter_unlock_date: BigInt(startTime + LOCK_INTERVAL),                
             }
         );
         expect(failedUpdateVotesResult.transactions).toHaveTransaction({
