@@ -19,10 +19,7 @@ contract Skipper with Deployable {
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == jetton_lock_address);
         let op = msg.payload.asSlice().loadUint(32);
 
-        if (op == 0x690401) {
-            let refSlice = msg.payload.asSlice().loadRef().beginParse();
-            let expiresIn: Int = refSlice.loadUint(32);
-
+        if (op == 0x690401) {            
             let payload = RequestNewProposal.fromCell(msg.payload);
             self.last_proposal_id += 1;
             let new_proposal_init = initOf Proposal(myAddress(), self.last_proposal_id);
@@ -37,7 +34,7 @@ contract Skipper with Deployable {
                         initiator: msg.owner,
                         amount: msg.amount,
                         data: payload.data,
-                        expires_in: expiresIn
+                        lock_period: msg.lock_period // period to lock the contract (for init only)
                     }.toCell()
                 }
             );
@@ -56,7 +53,7 @@ contract Skipper with Deployable {
                     bounce: false,
                     body: UpdateVoterBalance{
                         amount: msg.amount,
-                        unlock_date: msg.unlock_date,
+                        voter_unlock_date: msg.voter_unlock_date, // unlock date of the voters tokens
                         vote: payload.vote
                     }.toCell()
                 }
@@ -74,10 +71,9 @@ contract Skipper with Deployable {
         let init = initOf JettonLock(owner, self.jetton_master);
         return contractAddress(init);
     }
-
     
-    get fun get_proposal_address(owner: Address, proposal_id: Int): Address {
-        let init = initOf Proposal(owner, proposal_id);
+    get fun get_proposal_address(proposal_id: Int): Address {
+        let init = initOf Proposal(myAddress(), proposal_id);
         return contractAddress(init);
     }
 }

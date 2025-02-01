@@ -38,27 +38,26 @@ contract JettonLock with Deployable {
         let ctx = context();
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.owner);
         nativeThrowUnless(ERROR_CODE_NEED_FEE, ctx.value >= MIN_LOCK_FEE);
-        //self.unlock_date = now() + LOCK_INTERVAL;
 
         let op = msg.payload.asSlice().loadUint(32);
         if (op == 0x690401){
-            // Read the ref cell and load optional `daysToLock` as uint
-            let refSlice = msg.payload.asSlice().loadRef().beginParse();
-            let expires_in = refSlice.loadUint(32);
-
-            // Calculate the new potential `unlock_date` based on `expires_in` or defaults
+            // Calculate the new unlock_date based on lock_period or defaults
             let calculatedUnlockDate: Int = now() + (
-                expires_in > 0
-                    ? (expires_in >= LOCK_MIN_INTERVAL ? expires_in : LOCK_MIN_INTERVAL) // Use `expires_in` or `LOCK_MIN_INTERVAL`
+                msg.lock_period != null && msg.lock_period!! > 0
+                    ? (msg.lock_period!! >= LOCK_MIN_INTERVAL ? msg.lock_period!! : LOCK_MIN_INTERVAL) 
                     : LOCK_INTERVAL // Default lock interval
             );
 
-            // Update `unlock_date` only if the calculated value is higher
+            // Update unlock_date only if the calculated value is higher
             if (calculatedUnlockDate > self.unlock_date) {
                 self.unlock_date = calculatedUnlockDate;
             }
-        }else  if (op == 0x690402){
-            // set extra lock time if value is passed
+        }else if (
+            op == 0x690402 && 
+            msg.lock_period != null && msg.lock_period!! > 0){ 
+            self.unlock_date = now() + msg.lock_period!!;
+        }else{
+            self.unlock_date = now() + LOCK_INTERVAL;
         }
 
         send(SendParameters{
@@ -67,7 +66,8 @@ contract JettonLock with Deployable {
                 mode: SendRemainingValue,
                 body: ProxyMessage{
                     owner: self.owner,
-                    unlock_date: self.unlock_date,
+                    lock_period: msg.lock_period,           // optional period to lock the contract (for init only)
+                    voter_unlock_date: self.unlock_date,    // unlock date of the voters tokens
                     amount: self.amount,
                     payload: msg.payload
                 }.toCell()

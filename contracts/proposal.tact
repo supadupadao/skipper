@@ -30,16 +30,13 @@ contract Proposal {
         self.is_initialized = true;
 
         // Calculate the expiration time
-        if (msg.expires_in > 0){
-            if(now() + msg.expires_in > now() + LOCK_MIN_INTERVAL) {
-                self.expires_at = now() + msg.expires_in;
-            }else {
-                self.expires_at = now() + LOCK_MIN_INTERVAL;
-            }            
+        if (msg.lock_period != null && msg.lock_period!! > 0) {
+            let proposedExpiration = now() + msg.lock_period!!;
+            self.expires_at = max(proposedExpiration, now() + LOCK_MIN_INTERVAL);
         } else {
-            let defaultLock = now() + LOCK_INTERVAL;
-            self.expires_at = defaultLock;
+            self.expires_at = now() + LOCK_INTERVAL;
         }
+
         
         send(SendParameters{ // TODO update value
                 to: contractAddress(voter_init),
@@ -59,10 +56,12 @@ contract Proposal {
         nativeThrowUnless(ERROR_PROPOSAL_EXPIRED, now() < self.expires_at);
 
          // Check if unlock_date covers the proposal's expires_at
-        nativeThrowUnless(ERROR_UNLOCK_DATE_INSUFFICIENT, msg.unlock_date >= self.expires_at);
+        nativeThrowUnless(ERROR_UNLOCK_DATE_INSUFFICIENT, msg.voter_unlock_date >= self.expires_at);
+        dump(1);        
 
         let voter_init = initOf Voter(self.master, myAddress(), msg.owner);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == contractAddress(voter_init));
+
         if (msg.vote == 1) {
             self.votes_yes += msg.amount;
         }
@@ -124,7 +123,7 @@ contract Voter {
                     owner: self.owner, 
                     amount: msg.amount - self.amount,
                     vote: msg.vote,
-                    unlock_date: msg.unlock_date
+                    voter_unlock_date: msg.voter_unlock_date
                 }.toCell()
             }
         );
