@@ -50,10 +50,20 @@ contract Skipper with Deployable {
             );
             return;
         }
-        nativeThrow(404);
+        nativeThrow(ERROR_PROXY_OPCODE_NOT_FOUND);
     }
 
     get fun get_skipper_data(): SkipperData {
         return SkipperData{last_proposal_id: self.last_proposal_id};
+    }
+
+    get fun get_proposal_address(proposal_id: Int): Address {
+        let init = initOf Proposal(myAddress(), proposal_id);
+        return contractAddress(init);
+    }
+
+    get fun get_lock_address(owner: Address): Address {
+        let init = initOf JettonLock(owner, self.jetton_master);
+        return contractAddress(init);
     }
 }

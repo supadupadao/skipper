@@ -1,98 +1,56 @@
 # Skipper 🐧
 
+[![Build status](https://img.shields.io/github/actions/workflow/status/supadupadao/skipper/ci.yml?label=CI)](https://github.com/supadupadao/skipper/actions/workflows/ci.yml)
+[![GitHub License](https://img.shields.io/github/license/supadupadao/skipper)](https://github.com/supadupadao/skipper/blob/master/LICENSE)
+[![TON](https://img.shields.io/badge/blockchain-TON-0098EA)](https://ton.org)
+[![Tact](https://img.shields.io/badge/lang-Tact-000000)](https://github.com/tact-lang/tact)
+[![Work in progress](https://img.shields.io/badge/WORK%20IN%20PROGRESS-DO%20NOT%20USE%20IN%20PRODUCTION-ff0000)](https://github.com/supadupadao/jetton/issues)
+
 ℹ️ Fully decentralized application for DAO managing on TON blockchain using governance tokens (jettons).
 
 ⚠️ <b>Warning! Work in progress!</b> Development of this project is not done!
 
 ❤️ I'll be very grateful for any kind of contribution: code, docs, issues, bug reports, github stars or whatever
 
-<!-- # Deploy TODO -->
-
 # Development
 
 This is default Tact blueprint project with default commands:
 
-- `npm run build` - build project and compile contracts
-- `npm test` - run contracts tests
-- `npx blueprint run` - execute script from `/scripts` directory
+-   `npm run build` - build project and compile contracts
+-   `npm test` - run contracts tests
+-   `npx blueprint run` - execute script from `/scripts` directory
 
 # Docs
 
-## Contracts interaction
+[Our gitbook](https://docs.supadupa.space/skipper):
 
-### Lock tokens
+-   [Read our architecture document](docs/ARCHITECTURE.md)
+-   [Read our contributing guideline](docs/CONTRIBUTING.md)
 
-```mermaid
-sequenceDiagram
-    actor wallet as User TON wallet
-    participant jetton as Governance token
+# Development
 
-    create participant lock as Jetton lock
-    wallet ->> lock: Deploy
-    wallet ->> jetton: 0x0f8a7ea5<br/>(JettonTransfer)
-    activate jetton
-    Note over jetton: Send tokens to lock address
-    Note over jetton: Notify lock about transfer
-    jetton ->> lock: 0x7362d09c<br/>(JettonTransferNotification)
-    deactivate jetton
-    activate lock
-    Note over lock: Save transfered amount
-    deactivate lock
+## Prerequisites
+
+To work with project locally you will need [Node.js](https://nodejs.org/en) version 22+. Clone this repo and run the following command to install dependencies
+
+```
+npm i
 ```
 
-### Create new proposal
+## How to build contract
 
-```mermaid
-sequenceDiagram
-    actor wallet as User TON wallet
-    participant lock as Jetton lock
-    participant dao as DAO
+The following command will compile contract source code. TVM byte code files will be stored in `build/` directory.
 
-    wallet ->> lock: 0x690101<br/>(SendProxyMessage)<br/>with body<br/>0x690401<br/>(RequestNewProposal)
-    activate lock
-    Note over lock: Pass proxied body to DAO
-    lock ->> dao: 0x690102<br/>(ProxyMessage)<br/>with body<br/>0x690401<br/>(RequestNewProposal)
-    deactivate lock
-    activate dao
-    Note over dao: Deploy proposal contract with next proposal_id
-    create participant proposal as Proposal
-    dao ->> proposal: 0x690201<br/>(InitProposal)
-    deactivate dao
-    activate proposal
-    Note over proposal: Deploy voter contract with user address
-    create participant voter as Voter
-    proposal ->> voter: 0x690301<br/>(InitVoter)
-    deactivate proposal
-    activate voter
-    Note over voter: Save voted amount of tokens
-    deactivate voter
+```
+npm run build
 ```
 
-### Vote for existing proposal
+## All allowed commands
 
-```mermaid
-sequenceDiagram
-    actor wallet as User TON wallet
-    participant lock as Jetton lock
-    participant dao as DAO
-    participant voter as Voter
-    participant proposal as Proposal
+-   `npm run build` - build project and compile contracts
+-   `npm test` - run contracts tests
+-   `npx blueprint run` - execute script from `/scripts` directory
 
-    wallet ->> lock: 0x690101<br/>(SendProxyMessage)<br/>with body<br/>0x690402<br/>(VoteForProposal)
-    activate lock
-    Note over lock: Pass proxied body to DAO
-    lock ->> dao: 0x690102<br/>(ProxyMessage)<br/>with body<br/>0x690402<br/>(VoteForProposal)
-    deactivate lock
-    activate dao
-    Note over dao: Send actual votes amount to proposal's voter
-    dao ->> voter: 0x690302<br/>(UpdateVoterBalance)
-    deactivate dao
-    activate voter
-    Note over voter: Compute new tokens amount as (new - previous)
-    Note over voter: Send new value to proposal
-    voter ->> proposal: 0x690202<br/>(UpdateVotes)
-    activate proposal
-    deactivate voter
-    Note over proposal: Update votes amount
-    deactivate proposal
-```
+# License
+
+[GNU GENERAL PUBLIC LICENSE 3.0](https://www.gnu.org/licenses/gpl-3.0.html)
