@@ -57,8 +57,6 @@ contract Proposal {
 
          // Check if unlock_date covers the proposal's expires_at
         nativeThrowUnless(ERROR_UNLOCK_DATE_INSUFFICIENT, msg.voter_unlock_date >= self.expires_at);
-        dump(1);        
-
         let voter_init = initOf Voter(self.master, myAddress(), msg.owner);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == contractAddress(voter_init));
 

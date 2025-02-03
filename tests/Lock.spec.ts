@@ -1,5 +1,5 @@
 import '@ton/test-utils';
-import { beginCell, comment, toNano , Cell  } from '@ton/core';
+import { beginCell, comment, toNano } from '@ton/core';
 import { Blockchain, SandboxContract, TreasuryContract  } from '@ton/sandbox';
 import { JettonLock } from '../wrappers/Lock';
 import { JettonMaster } from './JettonMaster';
@@ -109,7 +109,7 @@ describe('Success lock behavior', () => {
             body: beginCell()
                 .storeUint(OP_CODES.ProxyMessage, 32)               //Message code
                 .storeAddress(deployer.address)                     //Owner
-                .storeMaybeUint(LOCK_INTERVAL,64)                   //lock_period , option used for init a new proposal
+                .storeMaybeUint(LOCK_INTERVAL,64)                   //lock_period , optional used for creating a new proposal
                 .storeUint(blockchain.now!! + LOCK_INTERVAL, 64)    //voter_unlock_date , used to check before voting
                 .storeCoins(toNano('100500'))                       //amount
                 .storeRef(messagePayload)                           //payload
