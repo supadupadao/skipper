@@ -1,6 +1,8 @@
 import { address } from "@ton/core";
 
 export const LOCK_INTERVAL = 1209600;
+export const LOCK_MIN_INTERVAL = 86400;
+
 export const ZERO_ADDRESS = address("0:0000000000000000000000000000000000000000000000000000000000000000");
 
 export const OP_CODES = {
