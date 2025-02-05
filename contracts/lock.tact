@@ -60,6 +60,8 @@ contract JettonLock with Deployable {
             self.unlock_date = now() + LOCK_INTERVAL;
         }
 
+        
+
         send(SendParameters{
                 to: msg.to,
                 value: 0,
