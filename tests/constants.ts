@@ -35,4 +35,6 @@ export const EXIT_CODES = {
     AlreadyInitialized: 6906,
     ProposalExpired: 6907,
     AlreadyExecuted: 6908,
+    ProxyOPCodeNotFound: 6909,
+    UnlockDateInsufficient: 6910,
 };
