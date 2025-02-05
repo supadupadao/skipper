@@ -195,6 +195,7 @@ describe('Particibating in proposals tests with dynamic lock', () => {
     let lock: SandboxContract<JettonLock>;
     let user2_lock: SandboxContract<JettonLock>;
     let proposal: SandboxContract<Proposal>;
+    let proposal2: SandboxContract<Proposal>;
 
     
     beforeEach(async () => {
@@ -215,6 +216,7 @@ describe('Particibating in proposals tests with dynamic lock', () => {
         lock = blockchain.openContract(await JettonLock.fromInit(deployer.address, jetton_master.address));
         user2_lock = blockchain.openContract(await JettonLock.fromInit(user2.address, jetton_master.address));
         proposal = blockchain.openContract(await Proposal.fromInit(skipper.address, 1n));
+        proposal2 = blockchain.openContract(await Proposal.fromInit(skipper.address, 2n));
 
 
         //Setup user1 (deployer) accounts 
@@ -395,7 +397,8 @@ describe('Particibating in proposals tests with dynamic lock', () => {
         expect(expiresAt).toEqual(BigInt(blockchain.now + LOCK_INTERVAL));
     });
 
-    async function runVoteProposalTest(lock_period: bigint | null): Promise<any> {
+    //Runs the vote proposal votes for user2
+    async function runVoteProposalTest(lock_period: bigint | null , proposalId: bigint = 1n): Promise<any> {
         const voteProposalResult = await user2_lock.send(
             user2.getSender(),
             {
@@ -407,7 +410,7 @@ describe('Particibating in proposals tests with dynamic lock', () => {
                 lock_period: lock_period,
                 payload: beginCell()
                     .storeUint(OP_CODES.VoteForProposal, 32)
-                    .storeUint(1, 64)
+                    .storeUint(proposalId, 64)
                     .storeUint(1, 1)
                     .asCell(),
             }
@@ -435,7 +438,7 @@ describe('Particibating in proposals tests with dynamic lock', () => {
         return voteProposalResult
     }
 
-    it('should create proposal with the default LOCK_INTERVAL', async () => {
+    it('should participate on a proposal with the default lock_period value LOCK_INTERVAL', async () => {
         let voteProposalResult = await runVoteProposalTest(BigInt(LOCK_INTERVAL));
 
         expect(voteProposalResult.transactions).toHaveTransaction({
@@ -446,29 +449,31 @@ describe('Particibating in proposals tests with dynamic lock', () => {
         });      
     });
 
-    it('should try to create proposal with lock_period 0 and revert to LOCK_INTERVAL', async () => {
+    it('should try to participate on a proposal lock_period value 0', async () => {
         let voteProposalResult =  await runVoteProposalTest(BigInt(0));
 
         expect(voteProposalResult.transactions).toHaveTransaction({
             // from: voter.address,
             to: proposal.address,
-            success: true,
+            success: false,
             op: OP_CODES.UpdateVotes,
+            exitCode: EXIT_CODES.UnlockDateInsufficient
         });      
     });
 
-    it('should try to create proposal with lock_period null and revert to LOCK_INTERVAL', async () => {
+    it('should try to participate on a proposal with lock_period value null', async () => {
         let voteProposalResult =  await runVoteProposalTest(null);
 
         expect(voteProposalResult.transactions).toHaveTransaction({
             // from: voter.address,
             to: proposal.address,
-            success: true,
+            success: false,
             op: OP_CODES.UpdateVotes,
+            exitCode: EXIT_CODES.UnlockDateInsufficient
         });      
     });
 
-    it('should try to create proposal with lock_period not sufficient for the proposal', async () => {
+    it('should try participate on a proposal with lock_period value not sufficient for the proposal', async () => {
         let voteProposalResult =  await runVoteProposalTest(5n);
 
         expect(voteProposalResult.transactions).toHaveTransaction({
@@ -480,7 +485,7 @@ describe('Particibating in proposals tests with dynamic lock', () => {
         });      
     });
     
-    it('should create proposal with lock_period that spans more than the proposal expiry', async () => {
+    it('should participate on a proposal with lock_period value that spans more than the proposal expiry', async () => {
         let voteProposalResult =  await runVoteProposalTest(BigInt(LOCK_INTERVAL) + 5n);
 
         expect(voteProposalResult.transactions).toHaveTransaction({
@@ -489,6 +494,93 @@ describe('Particibating in proposals tests with dynamic lock', () => {
             success: true,
             op: OP_CODES.UpdateVotes,
         });      
+        
+    });
+
+    it('should participate on 2 proposals', async () => {
+        let voteProposalResult =  await runVoteProposalTest(BigInt(LOCK_INTERVAL) + 5n);
+
+        expect(voteProposalResult.transactions).toHaveTransaction({
+            // from: voter.address,
+            to: proposal.address,
+            success: true,
+            op: OP_CODES.UpdateVotes,
+        });      
+
+        //Create another proposal from user1 (deployer)
+        var random = Math.floor(Math.random() * 900000);
+        await lock.send(
+            deployer.getSender(),
+            {
+                value: toNano("1")
+            },
+            {
+                $$type: 'SendProxyMessage',
+                to: skipper.address,
+                lock_period: BigInt(LOCK_INTERVAL),
+                payload: beginCell()
+                .storeUint(OP_CODES.RequestNewProposal, 32)
+                .storeAddress(deployer.address)                
+                .storeRef(
+                    beginCell()
+                    .storeUint(random, 256)
+                    .endCell())
+                .asCell(),
+            }
+        );
+
+        //Try to participate as user 2
+        let voteProposalResult2 =  await runVoteProposalTest(BigInt(LOCK_INTERVAL), 2n);
+
+        expect(voteProposalResult2.transactions).toHaveTransaction({
+            // from: voter.address,
+            to: proposal2.address,
+            success: true,
+            op: OP_CODES.UpdateVotes,
+        });     
+    });
+
+    it('should participate on 2 proposals without sufficient locking on the second', async () => {
+        let voteProposalResult =  await runVoteProposalTest(BigInt(LOCK_INTERVAL) + 5n);
+
+        expect(voteProposalResult.transactions).toHaveTransaction({
+            // from: voter.address,
+            to: proposal.address,
+            success: true,
+            op: OP_CODES.UpdateVotes,
+        });      
+
+        //Create another proposal from user1 (deployer)
+        var random = Math.floor(Math.random() * 900000);
+        await lock.send(
+            deployer.getSender(),
+            {
+                value: toNano("1")
+            },
+            {
+                $$type: 'SendProxyMessage',
+                to: skipper.address,
+                lock_period: BigInt(LOCK_INTERVAL),
+                payload: beginCell()
+                .storeUint(OP_CODES.RequestNewProposal, 32)
+                .storeAddress(deployer.address)                
+                .storeRef(
+                    beginCell()
+                    .storeUint(random, 256)
+                    .endCell())
+                .asCell(),
+            }
+        );
+
+        //Try to participate as user 2
+        let voteProposalResult2 =  await runVoteProposalTest(null, 2n);
+
+        expect(voteProposalResult2.transactions).toHaveTransaction({
+            // from: voter.address,
+            to: proposal2.address,
+            success: true,
+            op: OP_CODES.UpdateVotes
+        });     
     });
 });
 
