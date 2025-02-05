@@ -31,7 +31,6 @@ contract JettonLock with Deployable {
         let jetton_wallet_address = contractAddress(jetton_wallet_init);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == jetton_wallet_address);
         self.amount += msg.amount;
-        self.unlock_date = now() + LOCK_INTERVAL;
     }
 
     receive(msg: SendProxyMessage){
@@ -60,10 +59,6 @@ contract JettonLock with Deployable {
                 }
             }            
         }
-        else{
-            // Handle uknown operation
-            self.unlock_date = now() + LOCK_INTERVAL;
-        }        
 
         send(SendParameters{
                 to: msg.to,
