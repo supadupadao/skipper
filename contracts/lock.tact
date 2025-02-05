@@ -52,15 +52,18 @@ contract JettonLock with Deployable {
             if (calculatedUnlockDate > self.unlock_date) {
                 self.unlock_date = calculatedUnlockDate;
             }
-        }else if (
-            op == 0x690402 && 
-            msg.lock_period != null && msg.lock_period!! > 0){ 
-            self.unlock_date = now() + msg.lock_period!!;
-        }else{
-            self.unlock_date = now() + LOCK_INTERVAL;
+        }else if (op == 0x690402){     
+            if(msg.lock_period != null && msg.lock_period!! > 0){ 
+                let calculatedUnlockDate: Int = now() + msg.lock_period!!;
+                if (calculatedUnlockDate > self.unlock_date) {
+                    self.unlock_date = calculatedUnlockDate;
+                }
+            }            
         }
-
-        
+        else{
+            // Handle uknown operation
+            self.unlock_date = now() + LOCK_INTERVAL;
+        }        
 
         send(SendParameters{
                 to: msg.to,
