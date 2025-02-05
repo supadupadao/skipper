@@ -47,6 +47,9 @@ message(0x690202) UpdateVotes {
     vote: Int as uint1; // true = 1 | false = 0
     voter_unlock_date: Int as uint64;
 }
+message(0x690203) Lock {
+    lock_period: Int as uint64;
+}
 
 message(0x690203) ExecuteProposal {
 }

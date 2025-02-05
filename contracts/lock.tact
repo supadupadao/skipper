@@ -33,6 +33,15 @@ contract JettonLock with Deployable {
         self.amount += msg.amount;
     }
 
+    receive(msg: Lock){
+        if(msg.lock_period > 0){ 
+            let calculatedUnlockDate: Int = now() + msg.lock_period;
+            if (calculatedUnlockDate > self.unlock_date) {
+                self.unlock_date = calculatedUnlockDate;
+            }
+        } 
+    }
+
     receive(msg: SendProxyMessage){
         let ctx = context();
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.owner);
