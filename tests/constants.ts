@@ -13,6 +13,7 @@ export const OP_CODES = {
     SendProxyMessage: 0x690101,             // Proxy message if sender is lock owner
     ProxyMessage: 0x690102,                 // Proxy message body
     UnlockJettons: 0x690103,                // Unlock jettons and send to owner jetton wallet
+    LockJettons: 0x690104,                         // Lock the jettons
     /* 02 - Proposal messages */
     InitProposal: 0x690201,                 // Initialize new proposal
     UpdateVotes: 0x690202,                  // Update proposal votes
@@ -37,4 +38,6 @@ export const EXIT_CODES = {
     AlreadyExecuted: 6908,
     ProxyOPCodeNotFound: 6909,
     UnlockDateInsufficient: 6910,
+    InvalidLockPeriod: 6911, 
+    LockPeriodTooShort: 6912,
 };

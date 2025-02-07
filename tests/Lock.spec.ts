@@ -76,9 +76,35 @@ describe('Success lock behavior', () => {
         const lockData = await lock.getGetLockData();
         expect(lockData.amount).toEqual(toNano("100500"));
         expect(lockData.owner.toString()).toEqual(deployer.address.toString());
+        //expect(lockData.unlock_date).toEqual(BigInt(blockchain.now + LOCK_INTERVAL));
+    });
+
+    it('should lock the jettons', async () => {
+        let startTime = Math.floor(Date.now() / 1000);
+
+        blockchain.now = startTime;
+        const lockResult = await lock.send(
+            deployer.getSender(),
+            {
+                value: toNano('0.5'),
+            },
+            {
+                $$type: 'LockJettons',
+                lock_period: BigInt(LOCK_INTERVAL)
+            }
+        );
+
+        expect(lockResult.transactions).toHaveTransaction({
+            from: deployer.address,
+            to: lock.address,
+            success: true,
+            op: OP_CODES.LockJettons,
+        });
+
+        const lockData = await lock.getGetLockData();
         expect(lockData.unlock_date).toEqual(BigInt(blockchain.now + LOCK_INTERVAL));
     });
-   
+  
 
     it('should proxy message', async () => {
         const messagePayload = beginCell().storeUint(1337, 256).asCell();
@@ -141,6 +167,7 @@ describe('Success lock behavior', () => {
         });
     });
 });
+
 
 describe('Error handling for lock', () => {
     let blockchain: Blockchain;
@@ -319,6 +346,27 @@ describe('Error handling for lock', () => {
             to: lock.address,
             success: true,
             op: OP_CODES.JettonTransferNotification,
+        });
+
+      
+       
+
+        const lockResult = await lock.send(
+            deployer.getSender(),
+            {
+                value: toNano('0.5'),
+            },
+            {
+                $$type: 'LockJettons',
+                lock_period: BigInt(LOCK_INTERVAL)
+            }
+        );
+
+        expect(lockResult.transactions).toHaveTransaction({
+            from: deployer.address,
+            to: lock.address,
+            success: true,
+            op: OP_CODES.LockJettons,
         });
 
         const lockData = await lock.getGetLockData();
