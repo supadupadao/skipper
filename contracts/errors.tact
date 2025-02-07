@@ -20,3 +20,7 @@ const ERROR_ALREADY_EXECUTED: Int = 6908;
 const ERROR_PROXY_OPCODE_NOT_FOUND: Int = 6909;
 // Unlock date is insufficient to cover proposal expiration date
 const ERROR_UNLOCK_DATE_INSUFFICIENT: Int = 6910;
+// Lock period must be greater than zero
+const ERROR_INVALID_LOCK_PERIOD: Int = 6911;
+// Lock period is too short and does not extend the current unlock date
+const ERROR_LOCK_PERIOD_TOO_SHORT: Int = 6912;

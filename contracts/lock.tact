@@ -33,14 +33,14 @@ contract JettonLock with Deployable {
         self.amount += msg.amount;
     }
 
-    receive(msg: Lock){
-        if(msg.lock_period > 0){ 
-            let calculatedUnlockDate: Int = now() + msg.lock_period;
-            if (calculatedUnlockDate > self.unlock_date) {
-                self.unlock_date = calculatedUnlockDate;
-            }
-        } 
+    receive(msg: LockJettons) {
+        nativeThrowUnless(ERROR_INVALID_LOCK_PERIOD, msg.lock_period > 0);
+        // Ensure the new lock period actually extends the lock date
+        let calculatedUnlockDate: Int = now() + msg.lock_period;        
+        nativeThrowUnless(ERROR_LOCK_PERIOD_TOO_SHORT, calculatedUnlockDate > self.unlock_date);
+        self.unlock_date = calculatedUnlockDate;
     }
+
 
     receive(msg: SendProxyMessage){
         let ctx = context();
