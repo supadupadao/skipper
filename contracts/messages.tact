@@ -22,26 +22,33 @@ struct ProposalData {
 /* 01 - Lock messages */
 message(0x690101) SendProxyMessage {
     to: Address;
+    lock_period: Int? as uint64; // for the contract
     payload: Cell;
 }
 message(0x690102) ProxyMessage {
     owner: Address;
-    unlock_date: Int as uint64;
+    lock_period: Int? as uint64;        // for the contract
+    voter_unlock_date: Int as uint64;   // of the lock , only needed when we participate in a proposal
     amount: Int as coins;
     payload: Cell;
 }
 message(0x690103) UnlockJettons {
+}
+message(0x690104) LockJettons {
+    lock_period: Int as uint64;
 }
 /* 02 - Proposal messages */
 message(0x690201) InitProposal {
     initiator: Address;
     amount: Int as coins;
     data: ProposalData;
+    lock_period: Int? as uint64;
 }
 message(0x690202) UpdateVotes {
     owner: Address;
     amount: Int as coins;
     vote: Int as uint1; // true = 1 | false = 0
+    voter_unlock_date: Int as uint64;
 }
 message(0x690203) ExecuteProposal {
 }
@@ -52,6 +59,7 @@ message(0x690301) InitVoter {
 message(0x690302) UpdateVoterBalance {
     amount: Int as coins;
     vote: Int as uint1; // true = 1 | false = 0
+    voter_unlock_date: Int as uint64;
 }
 /* 04 - Skipper */
 message(0x690401) RequestNewProposal {
