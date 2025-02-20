@@ -98,7 +98,10 @@ contract Voter {
     master: Address;
     proposal: Address;
     owner: Address;
+    is_initialized: Bool = false;
+
     amount: Int = 0;
+
     init(master: Address, proposal: Address, owner: Address){
         self.master = master;
         self.proposal = proposal;
@@ -106,12 +109,14 @@ contract Voter {
     }
 
     receive(msg: InitVoter){
-        // TODO check already initialized
+        nativeThrowIf(ERROR_ALREADY_INITIALIZED, self.is_initialized);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.proposal);
+        self.is_initialized = true;
         self.amount = msg.amount;
     }
 
     receive(msg: UpdateVoterBalance){
+        nativeThrowUnless(ERROR_NOT_INITIALIZED, self.is_initialized);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);       
         send(SendParameters{
                 to: self.proposal,
