@@ -117,6 +117,7 @@ contract Voter {
         nativeThrowIf(ERROR_ALREADY_INITIALIZED, self.is_initialized);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.proposal);
         self.initialize(msg.amount);
+        self.voted = true;
     }
 
     receive(msg: UpdateVoterBalance){   
