@@ -40,4 +40,5 @@ export const EXIT_CODES = {
     UnlockDateInsufficient: 6910,
     InvalidLockPeriod: 6911, 
     LockPeriodTooShort: 6912,
+    VoteAlreadyCasted: 6913,
 };

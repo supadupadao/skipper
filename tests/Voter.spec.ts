@@ -58,7 +58,7 @@ describe('Voter', () => {
         });
     });
 
-    it('should fail UpdateVoterBalance if voter is not initialized', async () => {
+    it('should initialize voter on first UpdateVoterBalance call', async () => {
         const updateBalanceResult = await voter.send(
             skipper.getSender(),
             {
@@ -75,10 +75,11 @@ describe('Voter', () => {
         expect(updateBalanceResult.transactions).toHaveTransaction({
             from: skipper.address,
             to: voter.address,
-            success: false,
-            exitCode: EXIT_CODES.NotInitialized,
+            success: true,
+            op: OP_CODES.UpdateVoterBalance,
         });
     });
+    
     
     it('should fail initialization from unauthorized sender', async () => {
         const result = await voter.send(
@@ -110,7 +111,8 @@ describe('Voter', () => {
             success: true,
             op: OP_CODES.InitVoter,
         });
-
+    
+        // Unauthorized sender
         const result = await voter.send(
             proposal.getSender(),
             { value: toNano("1") },
@@ -121,10 +123,55 @@ describe('Voter', () => {
                 voter_unlock_date: BigInt(Math.floor(Date.now() / 1000 + 3600)),
             }
         );
-
+    
         expect(result.transactions).toHaveTransaction({
             success: false,
-            exitCode: EXIT_CODES.InvalidOwner,
+            exitCode: EXIT_CODES.InvalidOwner, // Unauthorized sender should fail
         });
     });
+
+    it('should fail if voter tries to vote twice', async () => {
+        // First vote
+        const firstVoteResult = await voter.send(
+            skipper.getSender(),
+            {
+                value: toNano("1"),
+            },
+            {
+                $$type: 'UpdateVoterBalance',
+                amount: toNano("100"),
+                vote: BigInt(1),
+                voter_unlock_date: BigInt(Math.floor(Date.now() / 1000 + 3600))
+            }
+        );
+    
+        expect(firstVoteResult.transactions).toHaveTransaction({
+            from: skipper.address,
+            to: voter.address,
+            success: true,
+            op: OP_CODES.UpdateVoterBalance,
+        });
+    
+        // Second vote (should fail)
+        const secondVoteResult = await voter.send(
+            skipper.getSender(),
+            {
+                value: toNano("1"),
+            },
+            {
+                $$type: 'UpdateVoterBalance',
+                amount: toNano("150"),  // Different amount to ensure it's not the same input
+                vote: BigInt(0),        // Opposite vote
+                voter_unlock_date: BigInt(Math.floor(Date.now() / 1000 + 3600))
+            }
+        );
+    
+        expect(secondVoteResult.transactions).toHaveTransaction({
+            from: skipper.address,
+            to: voter.address,
+            success: false,
+            exitCode: EXIT_CODES.VoteAlreadyCasted, // Expect vote already cast error
+        });
+    });    
+    
 });
