@@ -120,7 +120,7 @@ contract Voter {
     }
 
     receive(msg: UpdateVoterBalance){   
-        nativeThrowUnless(ERROR_CODE_VOTE_ALREADY_CASTED, self.voted);             
+        nativeThrowIf(ERROR_CODE_VOTE_ALREADY_CASTED, self.voted);             
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);    
         if (!self.is_initialized) {
             self.initialize(msg.amount);
