@@ -39,6 +39,5 @@ export const EXIT_CODES = {
     ProxyOPCodeNotFound: 6909,
     UnlockDateInsufficient: 6910,
     InvalidLockPeriod: 6911, 
-    LockPeriodTooShort: 6912,
-    VoteAlreadyCasted: 6913,
+    LockPeriodTooShort: 6912
 };

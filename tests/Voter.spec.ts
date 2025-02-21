@@ -92,26 +92,9 @@ describe('Voter', () => {
             success: false,
             exitCode: EXIT_CODES.InvalidOwner,
         });
-    });
+    });    
 
     it('should fail UpdateVoterBalance from unauthorized sender', async () => {
-        let firstInitResult = await voter.send(
-            proposal.getSender(),
-            {
-                value: toNano("1"),
-            },
-            {
-                $$type: 'InitVoter',
-                amount: toNano("100"),
-            }
-        );
-        expect(firstInitResult.transactions).toHaveTransaction({
-            from: proposal.address,
-            to: voter.address,
-            success: true,
-            op: OP_CODES.InitVoter,
-        });
-    
         // Unauthorized sender
         const result = await voter.send(
             proposal.getSender(),
@@ -170,7 +153,7 @@ describe('Voter', () => {
             from: skipper.address,
             to: voter.address,
             success: false,
-            exitCode: EXIT_CODES.VoteAlreadyCasted, // Expect vote already cast error
+            exitCode: EXIT_CODES.AlreadyInitialized, // Expect vote already cast error
         });
     });    
     

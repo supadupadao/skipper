@@ -99,7 +99,6 @@ contract Voter {
     proposal: Address;
     owner: Address;
     is_initialized: Bool = false;
-    voted: Bool = false;
     amount: Int = 0;
 
     init(master: Address, proposal: Address, owner: Address){
@@ -117,17 +116,12 @@ contract Voter {
         nativeThrowIf(ERROR_ALREADY_INITIALIZED, self.is_initialized);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.proposal);
         self.initialize(msg.amount);
-        self.voted = true;
     }
 
     receive(msg: UpdateVoterBalance){   
-        nativeThrowIf(ERROR_CODE_VOTE_ALREADY_CASTED, self.voted);             
+        nativeThrowIf(ERROR_ALREADY_INITIALIZED, self.is_initialized);             
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);    
-        if (!self.is_initialized) {
-            self.initialize(msg.amount);
-        }
-
-        self.voted = true;
+        self.initialize(msg.amount);        
 
         send(SendParameters{
                 to: self.proposal,
