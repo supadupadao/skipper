@@ -99,7 +99,7 @@ contract Voter {
     proposal: Address;
     owner: Address;
     is_initialized: Bool = false;
-
+    voted: Bool = false;
     amount: Int = 0;
 
     init(master: Address, proposal: Address, owner: Address){
@@ -108,16 +108,26 @@ contract Voter {
         self.owner = owner;
     }
 
+    fun initialize(amount: Int) {
+        self.is_initialized = true;
+        self.amount = amount;
+    }
+
     receive(msg: InitVoter){
         nativeThrowIf(ERROR_ALREADY_INITIALIZED, self.is_initialized);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.proposal);
-        self.is_initialized = true;
-        self.amount = msg.amount;
+        self.initialize(msg.amount);
     }
 
-    receive(msg: UpdateVoterBalance){
-        nativeThrowUnless(ERROR_NOT_INITIALIZED, self.is_initialized);
-        nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);       
+    receive(msg: UpdateVoterBalance){   
+        nativeThrowUnless(ERROR_CODE_VOTE_ALREADY_CASTED, self.voted);             
+        nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);    
+        if (!self.is_initialized) {
+            self.initialize(msg.amount);
+        }
+
+        self.voted = true;
+
         send(SendParameters{
                 to: self.proposal,
                 value: 0,
