@@ -3,6 +3,7 @@ import {  toNano } from '@ton/core';
 import '@ton/test-utils';
 import { EXIT_CODES, OP_CODES } from './constants';
 import { Voter } from '../wrappers/Voter';
+import { exitCode } from 'process';
 
 describe('Voter', () => {
     let blockchain: Blockchain;
@@ -113,7 +114,7 @@ describe('Voter', () => {
         });
     });
 
-    it('should fail if voter tries to vote twice', async () => {
+    it('should allow increasing vote', async () => {
         // First vote
         const firstVoteResult = await voter.send(
             skipper.getSender(),
@@ -152,8 +153,31 @@ describe('Voter', () => {
         expect(secondVoteResult.transactions).toHaveTransaction({
             from: skipper.address,
             to: voter.address,
+            success: true,
+            op: OP_CODES.UpdateVoterBalance, // Expect vote already cast error
+        });
+    });    
+
+    it('should not allow vote with incorect amount', async () => {
+        // First vote
+        const voteResult = await voter.send(
+            skipper.getSender(),
+            {
+                value: toNano("1"),
+            },
+            {
+                $$type: 'UpdateVoterBalance',
+                amount: toNano("0"),
+                vote: BigInt(1),
+                voter_unlock_date: BigInt(Math.floor(Date.now() / 1000 + 3600))
+            }
+        );
+    
+        expect(voteResult.transactions).toHaveTransaction({
+            from: skipper.address,
+            to: voter.address,
             success: false,
-            exitCode: EXIT_CODES.AlreadyInitialized, // Expect vote already cast error
+            exitCode: EXIT_CODES.InvalidAmount
         });
     });    
     

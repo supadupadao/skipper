@@ -107,21 +107,18 @@ contract Voter {
         self.owner = owner;
     }
 
-    fun initialize(amount: Int) {
-        self.is_initialized = true;
-        self.amount = amount;
-    }
-
     receive(msg: InitVoter){
         nativeThrowIf(ERROR_ALREADY_INITIALIZED, self.is_initialized);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.proposal);
-        self.initialize(msg.amount);
+        self.is_initialized = true;
+        self.amount = msg.amount;
     }
 
     receive(msg: UpdateVoterBalance){   
-        nativeThrowIf(ERROR_ALREADY_INITIALIZED, self.is_initialized);             
+        nativeThrowIf(ERROR_CODE_INVALID_AMOUNT, msg.amount <= 0);             
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);    
-        self.initialize(msg.amount);        
+        self.is_initialized = true;
+        self.amount += msg.amount;
 
         send(SendParameters{
                 to: self.proposal,
@@ -129,7 +126,7 @@ contract Voter {
                 mode: SendRemainingValue,
                 body: UpdateVotes{
                     owner: self.owner, 
-                    amount: msg.amount - self.amount,
+                    amount: msg.amount,
                     vote: msg.vote,
                     voter_unlock_date: msg.voter_unlock_date
                 }.toCell()
