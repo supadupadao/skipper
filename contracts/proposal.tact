@@ -117,21 +117,24 @@ contract Voter {
     receive(msg: UpdateVoterBalance){   
         nativeThrowIf(ERROR_CODE_INVALID_AMOUNT, msg.amount <= 0);             
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);    
+        
+        let newAmount = msg.amount - self.amount;
+        nativeThrowIf(ERROR_CODE_INVALID_AMOUNT, newAmount <= 0);
+
         self.is_initialized = true;
-        self.amount += msg.amount;
+        self.amount = msg.amount;
 
         send(SendParameters{
-                to: self.proposal,
-                value: 0,
-                mode: SendRemainingValue,
-                body: UpdateVotes{
-                    owner: self.owner, 
-                    amount: msg.amount,
-                    vote: msg.vote,
-                    voter_unlock_date: msg.voter_unlock_date
-                }.toCell()
-            }
-        );
+            to: self.proposal,
+            value: 0,
+            mode: SendRemainingValue,
+            body: UpdateVotes{
+                owner: self.owner, 
+                amount: newAmount, // Send only the difference
+                vote: msg.vote,
+                voter_unlock_date: msg.voter_unlock_date
+            }.toCell()
+        });
     }
 
     get fun get_voter_amount(): Int {
