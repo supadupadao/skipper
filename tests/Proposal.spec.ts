@@ -77,7 +77,7 @@ describe('Proposal', () => {
         let startTime = Math.floor(Date.now() / 1000);
 
         blockchain.now = startTime;
-        // init and vote as deployer
+
         await proposal.send(
             skipper.getSender(),
             {
@@ -95,18 +95,35 @@ describe('Proposal', () => {
                 }
             }
         );
-        
+
+        let successUpdateVotesResult = await voter.send(
+            skipper.getSender(),
+            {
+                value: toNano("0.05"),
+            },
+            {
+                $$type: "UpdateVoterBalance",
+                vote: 1n,
+                amount: toNano("100500"),
+                voter_unlock_date: BigInt(startTime + LOCK_INTERVAL),                
+            }
+        );
+        expect(successUpdateVotesResult.transactions).toHaveTransaction({
+            from: skipper.address,
+            to: voter.address,
+            success: true,
+            op: OP_CODES.UpdateVoterBalance,
+        });
+        expect(successUpdateVotesResult.transactions).toHaveTransaction({
+            from: voter.address,
+            to: proposal.address,
+            success: true,
+            op: OP_CODES.UpdateVotes,
+        });
+
         blockchain.now = blockchain.now!! + LOCK_INTERVAL + 1;
 
-        //init user 2
-        let voter2: SandboxContract<Voter>;
-        let user2: SandboxContract<TreasuryContract>;
-
-        user2 = await blockchain.treasury('user2');
-        voter2 = blockchain.openContract(await Voter.fromInit(skipper.address, proposal.address, user2.address));
-
-        //try to vote as user2 after expiry time
-        let failedUpdateVotesResult = await voter2.send(
+        let failedUpdateVotesResult = await voter.send(
             skipper.getSender(),
             {
                 value: toNano("0.05"),
@@ -120,12 +137,12 @@ describe('Proposal', () => {
         );
         expect(failedUpdateVotesResult.transactions).toHaveTransaction({
             from: skipper.address,
-            to: voter2.address,
+            to: voter.address,
             success: true,
             op: OP_CODES.UpdateVoterBalance,
         });
         expect(failedUpdateVotesResult.transactions).toHaveTransaction({
-            from: voter2.address,
+            from: voter.address,
             to: proposal.address,
             success: false,
             op: OP_CODES.UpdateVotes,
