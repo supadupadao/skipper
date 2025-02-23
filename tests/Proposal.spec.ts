@@ -104,7 +104,7 @@ describe('Proposal', () => {
             {
                 $$type: "UpdateVoterBalance",
                 vote: 1n,
-                amount: toNano("100500"),
+                amount: toNano("100600"),
                 voter_unlock_date: BigInt(startTime + LOCK_INTERVAL),                
             }
         );
@@ -131,7 +131,7 @@ describe('Proposal', () => {
             {
                 $$type: "UpdateVoterBalance",
                 vote: 1n,
-                amount: toNano("100500"),
+                amount: toNano("100700"),
                 voter_unlock_date: BigInt(startTime + LOCK_INTERVAL),                
             }
         );
