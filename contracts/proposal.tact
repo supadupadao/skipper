@@ -54,6 +54,7 @@ contract Proposal {
         nativeThrowUnless(ERROR_NOT_INITIALIZED, self.is_initialized);
         nativeThrowIf(ERROR_ALREADY_EXECUTED, self.is_executed);
         nativeThrowUnless(ERROR_PROPOSAL_EXPIRED, now() < self.expires_at);
+        nativeThrowIf(ERROR_CODE_INVALID_AMOUNT, msg.amount <= 0);             
 
          // Check if unlock_date covers the proposal's expires_at
         nativeThrowUnless(ERROR_UNLOCK_DATE_INSUFFICIENT, msg.voter_unlock_date >= self.expires_at);
@@ -110,17 +111,18 @@ contract Voter {
     receive(msg: InitVoter){
         nativeThrowIf(ERROR_ALREADY_INITIALIZED, self.is_initialized);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.proposal);
+        nativeThrowIf(ERROR_CODE_INVALID_AMOUNT, msg.amount <= 0);             
+
         self.is_initialized = true;
         self.amount = msg.amount;
     }
 
     receive(msg: UpdateVoterBalance){   
         nativeThrowIf(ERROR_CODE_INVALID_AMOUNT, msg.amount <= 0);             
-        nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);    
-        
-        let newAmount = msg.amount - self.amount;
-        nativeThrowIf(ERROR_CODE_INVALID_AMOUNT, newAmount <= 0);
+        nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);  
+        let newAmount = !self.is_initialized ? msg.amount : msg.amount - self.amount;
 
+        nativeThrowIf(ERROR_CODE_INVALID_AMOUNT, newAmount <= 0);
         self.is_initialized = true;
         self.amount = msg.amount;
 
