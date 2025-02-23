@@ -138,11 +138,50 @@ describe('Integration tests', () => {
         // TODO validate proposal data payload
     });
 
-    it('should vote for proposal', async () => {
+    it('should increase vote for proposal', async () => {
+
+        //Mint some jettons
+        await jetton_master.send(
+            deployer.getSender(),
+            {
+                value: toNano("0.05"),
+            },
+            {
+                $$type: 'JettonMint',
+                query_id: 0n,
+                amount: toNano('500'),
+                destination: deployer.address,
+            }
+        );
+        const jettonWalletData = await jetton_wallet.getGetWalletData();
+        expect(jettonWalletData.balance).toEqual(toNano('500'));   
+        
+        //lock them
+        await jetton_wallet.send(
+            deployer.getSender(),
+            {
+                value: toNano('0.1'),
+            },
+            {
+                $$type: 'JettonTransfer',
+                query_id: 0n,
+                amount: toNano("500"),
+                destination: lock.address,
+                custom_payload: null,
+                forward_payload: beginCell().asSlice(),
+                forward_ton_amount: toNano("0.05"),
+                response_destination: lock.address,
+            }
+        );
+
+        const lockData = await lock.getGetLockData();
+        expect(lockData.amount).toEqual(toNano('1337500'));
+
+        //Increase vote
         const voteProposalResult = await lock.send(
             deployer.getSender(),
             {
-                value: toNano("1")
+                value: toNano("10")
             },
             {
                 $$type: 'SendProxyMessage',
