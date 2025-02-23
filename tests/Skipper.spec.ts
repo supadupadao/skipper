@@ -181,7 +181,7 @@ describe('Integration tests', () => {
         const voteProposalResult = await lock.send(
             deployer.getSender(),
             {
-                value: toNano("10")
+                value: toNano("1")
             },
             {
                 $$type: 'SendProxyMessage',
