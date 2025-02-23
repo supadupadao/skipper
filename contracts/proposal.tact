@@ -54,6 +54,7 @@ contract Proposal {
         nativeThrowUnless(ERROR_NOT_INITIALIZED, self.is_initialized);
         nativeThrowIf(ERROR_ALREADY_EXECUTED, self.is_executed);
         nativeThrowUnless(ERROR_PROPOSAL_EXPIRED, now() < self.expires_at);
+        nativeThrowIf(ERROR_CODE_INVALID_AMOUNT, msg.amount <= 0);             
 
          // Check if unlock_date covers the proposal's expires_at
         nativeThrowUnless(ERROR_UNLOCK_DATE_INSUFFICIENT, msg.voter_unlock_date >= self.expires_at);
@@ -98,7 +99,9 @@ contract Voter {
     master: Address;
     proposal: Address;
     owner: Address;
+    is_initialized: Bool = false;
     amount: Int = 0;
+
     init(master: Address, proposal: Address, owner: Address){
         self.master = master;
         self.proposal = proposal;
@@ -106,25 +109,34 @@ contract Voter {
     }
 
     receive(msg: InitVoter){
-        // TODO check already initialized
+        nativeThrowIf(ERROR_ALREADY_INITIALIZED, self.is_initialized);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.proposal);
+        nativeThrowIf(ERROR_CODE_INVALID_AMOUNT, msg.amount <= 0);             
+
+        self.is_initialized = true;
         self.amount = msg.amount;
     }
 
-    receive(msg: UpdateVoterBalance){
-        nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);       
+    receive(msg: UpdateVoterBalance){   
+        nativeThrowIf(ERROR_CODE_INVALID_AMOUNT, msg.amount <= 0);             
+        nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);  
+        let newAmount = !self.is_initialized ? msg.amount : msg.amount - self.amount;
+
+        nativeThrowIf(ERROR_CODE_INVALID_AMOUNT, newAmount <= 0);
+        self.is_initialized = true;
+        self.amount = msg.amount;
+
         send(SendParameters{
-                to: self.proposal,
-                value: 0,
-                mode: SendRemainingValue,
-                body: UpdateVotes{
-                    owner: self.owner, 
-                    amount: msg.amount - self.amount,
-                    vote: msg.vote,
-                    voter_unlock_date: msg.voter_unlock_date
-                }.toCell()
-            }
-        );
+            to: self.proposal,
+            value: 0,
+            mode: SendRemainingValue,
+            body: UpdateVotes{
+                owner: self.owner, 
+                amount: newAmount, // Send only the difference
+                vote: msg.vote,
+                voter_unlock_date: msg.voter_unlock_date
+            }.toCell()
+        });
     }
 
     get fun get_voter_amount(): Int {

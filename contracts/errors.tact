@@ -24,3 +24,5 @@ const ERROR_UNLOCK_DATE_INSUFFICIENT: Int = 6910;
 const ERROR_INVALID_LOCK_PERIOD: Int = 6911;
 // Lock period is too short and does not extend the current unlock date
 const ERROR_LOCK_PERIOD_TOO_SHORT: Int = 6912;
+// Amount provided must be greater than zero
+const ERROR_CODE_INVALID_AMOUNT: Int = 6913;
