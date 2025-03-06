@@ -11,12 +11,13 @@ contract Proposal {
     is_executed: Bool = false;
     votes_yes: Int as coins = 0;
     votes_no: Int as coins = 0;
-    expired_at: Int as uint64;
+    expires_at: Int as uint64;
     data: ProposalData? = null;
-    init(master: Address, proposal_id: Int){
+    
+    init(master: Address, proposal_id: Int) {
         self.master = master;
         self.proposal_id = proposal_id;
-        self.expired_at = now() + LOCK_INTERVAL;
+        self.expires_at = now() + LOCK_INTERVAL;
     }
 
     receive(msg: InitProposal){
@@ -27,6 +28,16 @@ contract Proposal {
         self.votes_yes = msg.amount;
         let voter_init: StateInit = initOf Voter(self.master, myAddress(), msg.initiator);
         self.is_initialized = true;
+
+        // Calculate the expiration time
+        if (msg.lock_period != null && msg.lock_period!! > 0) {
+            let proposedExpiration = now() + msg.lock_period!!;
+            self.expires_at = max(proposedExpiration, now() + LOCK_MIN_INTERVAL);
+        } else {
+            self.expires_at = now() + LOCK_INTERVAL;
+        }
+
+        
         send(SendParameters{ // TODO update value
                 to: contractAddress(voter_init),
                 value: 0,
@@ -42,9 +53,14 @@ contract Proposal {
     receive(msg: UpdateVotes){
         nativeThrowUnless(ERROR_NOT_INITIALIZED, self.is_initialized);
         nativeThrowIf(ERROR_ALREADY_EXECUTED, self.is_executed);
-        nativeThrowUnless(ERROR_PROPOSAL_EXPIRED, now() < self.expired_at);
+        nativeThrowUnless(ERROR_PROPOSAL_EXPIRED, now() < self.expires_at);
+        nativeThrowIf(ERROR_CODE_INVALID_AMOUNT, msg.amount <= 0);             
+
+         // Check if unlock_date covers the proposal's expires_at
+        nativeThrowUnless(ERROR_UNLOCK_DATE_INSUFFICIENT, msg.voter_unlock_date >= self.expires_at);
         let voter_init = initOf Voter(self.master, myAddress(), msg.owner);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == contractAddress(voter_init));
+
         if (msg.vote == 1) {
             self.votes_yes += msg.amount;
         }
@@ -73,13 +89,19 @@ contract Proposal {
     get fun get_proposal_data(): ProposalData? {
         return self.data;
     }
+    
+    get fun expires_at(): Int {
+        return self.expires_at;
+    }
 }
 
 contract Voter {
     master: Address;
     proposal: Address;
     owner: Address;
+    is_initialized: Bool = false;
     amount: Int = 0;
+
     init(master: Address, proposal: Address, owner: Address){
         self.master = master;
         self.proposal = proposal;
@@ -87,20 +109,34 @@ contract Voter {
     }
 
     receive(msg: InitVoter){
-        // TODO check already initialized
+        nativeThrowIf(ERROR_ALREADY_INITIALIZED, self.is_initialized);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.proposal);
+        nativeThrowIf(ERROR_CODE_INVALID_AMOUNT, msg.amount <= 0);             
+
+        self.is_initialized = true;
         self.amount = msg.amount;
     }
 
-    receive(msg: UpdateVoterBalance){
-        nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);
+    receive(msg: UpdateVoterBalance){   
+        nativeThrowIf(ERROR_CODE_INVALID_AMOUNT, msg.amount <= 0);             
+        nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);  
+        let newAmount = !self.is_initialized ? msg.amount : msg.amount - self.amount;
+
+        nativeThrowIf(ERROR_CODE_INVALID_AMOUNT, newAmount <= 0);
+        self.is_initialized = true;
+        self.amount = msg.amount;
+
         send(SendParameters{
-                to: self.proposal,
-                value: 0,
-                mode: SendRemainingValue,
-                body: UpdateVotes{owner: self.owner, amount: msg.amount - self.amount, vote: msg.vote}.toCell()
-            }
-        );
+            to: self.proposal,
+            value: 0,
+            mode: SendRemainingValue,
+            body: UpdateVotes{
+                owner: self.owner, 
+                amount: newAmount, // Send only the difference
+                vote: msg.vote,
+                voter_unlock_date: msg.voter_unlock_date
+            }.toCell()
+        });
     }
 
     get fun get_voter_amount(): Int {

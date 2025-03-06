@@ -2,6 +2,7 @@ import "@stdlib/deploy";
 import "./consts.tact";
 import "./errors.tact";
 import "./messages.tact";
+import "./proposal.tact";
 
 fun computeJettonWalletStateInit(master: Address, owner: Address): StateInit {
     let data = beginCell().storeRef(JETTON_SYSTEM_CELL).storeUint(0, 1).storeAddress(master).storeAddress(owner
@@ -30,21 +31,52 @@ contract JettonLock with Deployable {
         let jetton_wallet_address = contractAddress(jetton_wallet_init);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == jetton_wallet_address);
         self.amount += msg.amount;
-        self.unlock_date = now() + LOCK_INTERVAL;
     }
+
+    receive(msg: LockJettons) {
+        nativeThrowUnless(ERROR_INVALID_LOCK_PERIOD, msg.lock_period > 0);
+        // Ensure the new lock period actually extends the lock date
+        let calculatedUnlockDate: Int = now() + msg.lock_period;        
+        nativeThrowUnless(ERROR_LOCK_PERIOD_TOO_SHORT, calculatedUnlockDate > self.unlock_date);
+        self.unlock_date = calculatedUnlockDate;
+    }
+
 
     receive(msg: SendProxyMessage){
         let ctx = context();
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.owner);
         nativeThrowUnless(ERROR_CODE_NEED_FEE, ctx.value >= MIN_LOCK_FEE);
-        self.unlock_date = now() + LOCK_INTERVAL;
+
+        let op = msg.payload.asSlice().loadUint(32);
+        if (op == 0x690401){
+            // Calculate the new unlock_date based on lock_period or defaults
+            let calculatedUnlockDate: Int = now() + (
+                msg.lock_period != null && msg.lock_period!! > 0
+                    ? (msg.lock_period!! >= LOCK_MIN_INTERVAL ? msg.lock_period!! : LOCK_MIN_INTERVAL) 
+                    : LOCK_INTERVAL // Default lock interval
+            );
+
+            // Update unlock_date only if the calculated value is higher
+            if (calculatedUnlockDate > self.unlock_date) {
+                self.unlock_date = calculatedUnlockDate;
+            }
+        }else if (op == 0x690402){     
+            if(msg.lock_period != null && msg.lock_period!! > 0){ 
+                let calculatedUnlockDate: Int = now() + msg.lock_period!!;
+                if (calculatedUnlockDate > self.unlock_date) {
+                    self.unlock_date = calculatedUnlockDate;
+                }
+            }            
+        }
+
         send(SendParameters{
                 to: msg.to,
                 value: 0,
                 mode: SendRemainingValue,
                 body: ProxyMessage{
                     owner: self.owner,
-                    unlock_date: self.unlock_date,
+                    lock_period: msg.lock_period,           // optional period to lock the contract (for init only)
+                    voter_unlock_date: self.unlock_date,    // unlock date of the voters tokens
                     amount: self.amount,
                     payload: msg.payload
                 }.toCell()

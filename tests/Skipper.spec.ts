@@ -6,7 +6,7 @@ import { JettonMaster } from './JettonMaster';
 import { JettonWallet } from './JettonWallet';
 import { JettonLock } from '../wrappers/Lock';
 import { Proposal } from '../wrappers/Proposal';
-import { EXIT_CODES, OP_CODES } from './constants';
+import { EXIT_CODES, LOCK_INTERVAL, OP_CODES } from './constants';
 
 describe('Integration tests', () => {
     let blockchain: Blockchain;
@@ -90,6 +90,7 @@ describe('Integration tests', () => {
         expect(lockData.amount).toEqual(toNano('1337000'));
     });
 
+    
     it('should create proposal', async () => {
         const createProposalResult = await lock.send(
             deployer.getSender(),
@@ -99,6 +100,7 @@ describe('Integration tests', () => {
             {
                 $$type: 'SendProxyMessage',
                 to: skipper.address,
+                lock_period: null,
                 payload: beginCell()
                     .storeUint(OP_CODES.RequestNewProposal, 32)
                     .storeAddress(deployer.address)
@@ -136,7 +138,46 @@ describe('Integration tests', () => {
         // TODO validate proposal data payload
     });
 
-    it('should vote for proposal', async () => {
+    it('should increase vote for proposal', async () => {
+
+        //Mint some jettons
+        await jetton_master.send(
+            deployer.getSender(),
+            {
+                value: toNano("0.05"),
+            },
+            {
+                $$type: 'JettonMint',
+                query_id: 0n,
+                amount: toNano('500'),
+                destination: deployer.address,
+            }
+        );
+        const jettonWalletData = await jetton_wallet.getGetWalletData();
+        expect(jettonWalletData.balance).toEqual(toNano('500'));   
+        
+        //lock them
+        await jetton_wallet.send(
+            deployer.getSender(),
+            {
+                value: toNano('0.1'),
+            },
+            {
+                $$type: 'JettonTransfer',
+                query_id: 0n,
+                amount: toNano("500"),
+                destination: lock.address,
+                custom_payload: null,
+                forward_payload: beginCell().asSlice(),
+                forward_ton_amount: toNano("0.05"),
+                response_destination: lock.address,
+            }
+        );
+
+        const lockData = await lock.getGetLockData();
+        expect(lockData.amount).toEqual(toNano('1337500'));
+
+        //Increase vote
         const voteProposalResult = await lock.send(
             deployer.getSender(),
             {
@@ -145,6 +186,7 @@ describe('Integration tests', () => {
             {
                 $$type: 'SendProxyMessage',
                 to: skipper.address,
+                lock_period: BigInt(LOCK_INTERVAL),
                 payload: beginCell()
                     .storeUint(OP_CODES.VoteForProposal, 32)
                     .storeUint(1, 64)
