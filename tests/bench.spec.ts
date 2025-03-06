@@ -24,14 +24,14 @@ function measureGas(transactions: BlockchainTransaction[]): bigint {
 }
 
 const GAS_CONSUMPTION_VALUES = {
-    DEPLOY_SKIPPER: toNano('0.031'),
-    DEPLOY_LOCK: toNano('0.019'),
+    DEPLOY_SKIPPER: toNano('0.039'),
+    DEPLOY_LOCK: toNano('0.022'),
     MINT_JETTON: toNano('0.044'),
     TRANSFER_JETTON: toNano('0.028'),
     UNLOCK_JETTON: toNano('0.028'),
-    NEW_PROPOSAL: toNano('0.016'),
-    VOTE_PROPOSAL: toNano('0.015'),
-    EXECUTE_PROPOSAL: toNano('0.004'),
+    NEW_PROPOSAL: toNano('0.034'),
+    VOTE_PROPOSAL: toNano('0.031'),
+    EXECUTE_PROPOSAL: toNano('0.005'),
 }
 
 describe('Gas consumption benchmark', () => {
