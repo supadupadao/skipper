@@ -22,6 +22,54 @@ describe('Proposal', () => {
         voter = blockchain.openContract(await Voter.fromInit(skipper.address, proposal.address, deployer.address));
     });
 
+    it('should not allow to update votes without init', async () => {
+        let startTime = Math.floor(Date.now() / 1000);
+        blockchain.now = startTime;
+
+        let result = await proposal.send(
+            deployer.getSender(),
+            {
+                value: toNano("0.05"),
+            },
+            {
+                $$type: "UpdateVotes",
+                amount: toNano("100500"),
+                owner: deployer.address,
+                vote: 1n,
+                voter_unlock_date: BigInt(startTime + LOCK_INTERVAL),                
+            }
+        );
+        expect(result.transactions).toHaveTransaction({
+            from: deployer.address,
+            to: proposal.address,
+            success: false,
+            op: OP_CODES.UpdateVotes,
+            exitCode: EXIT_CODES.NotInitialized,
+        });      
+    });
+
+    it('should not allow to execute proposal without init', async () => {
+        let startTime = Math.floor(Date.now() / 1000);
+        blockchain.now = startTime;
+
+        let result = await proposal.send(
+            deployer.getSender(),
+            {
+                value: toNano("0.05"),
+            },
+            {
+                $$type: "ExecuteProposal"                            
+            }
+        );
+        expect(result.transactions).toHaveTransaction({
+            from: deployer.address,
+            to: proposal.address,
+            success: false,
+            op: OP_CODES.ExecuteProposal,
+            exitCode: EXIT_CODES.NotInitialized,
+        });      
+    });
+
     it('should not double init proposal', async () => {
         let firstInitResult = await proposal.send(
             skipper.getSender(),
