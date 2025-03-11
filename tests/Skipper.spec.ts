@@ -264,7 +264,7 @@ describe('Integration tests', () => {
             to: proposal.address,
             success: false,
             op: OP_CODES.ExecuteProposal,
-            exitCode: EXIT_CODES.NoEnoughVotes,
+            exitCode: EXIT_CODES.NotEnoughVotes,
         });
     });
 
