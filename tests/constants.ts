@@ -30,7 +30,7 @@ export const EXIT_CODES = {
     InvalidOwner: 132,
     NeedFee: 6901,
     UnlockDateNotArrived: 6902,
-    NoEnoughVotes: 6903, // TODO no tests
+    NotEnoughVotes: 6903, // TODO no tests
     TooManyNoVotes: 6904, // TODO no tests
     NotInitialized: 6905, // TODO no tests
     AlreadyInitialized: 6906,

@@ -72,7 +72,7 @@ contract Proposal {
     receive(msg: ExecuteProposal){
         nativeThrowUnless(ERROR_NOT_INITIALIZED, self.is_initialized);
         nativeThrowIf(ERROR_ALREADY_EXECUTED, self.is_executed);
-        nativeThrowUnless(ERROR_NO_ENOUGH_VOTES, self.votes_yes > PROPOSAL_ACCEPT_THRESHOLD);
+        nativeThrowUnless(ERROR_NOT_ENOUGH_VOTES, self.votes_yes > PROPOSAL_ACCEPT_THRESHOLD);
         nativeThrowUnless(ERROR_TOO_MANY_NO_VOTES, self.votes_yes > (self.votes_no + PROPOSAL_VOTES_GAP));
         nativeThrowUnless(ERROR_NOT_INITIALIZED, self.data != null);
 
