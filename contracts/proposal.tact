@@ -21,9 +21,9 @@ contract Proposal {
     }
 
     receive(msg: InitProposal){
-        // TODO check fees
         nativeThrowIf(ERROR_ALREADY_INITIALIZED, self.is_initialized);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);
+
         self.data = msg.data;
         self.votes_yes = msg.amount;
         let voter_init: StateInit = initOf Voter(self.master, myAddress(), msg.initiator);
@@ -37,6 +37,10 @@ contract Proposal {
             self.expires_at = now() + LOCK_INTERVAL;
         }
 
+        // Ensure sufficient TON is sent to cover storage fees for the entire voting period
+        let required_tons = self.estimateStorageFee(self.expires_at);
+        nativeThrowUnless(ERROR_INSUFFICIENT_STORAGE_FEE, msg.amount >= required_tons);
+
         
         send(SendParameters{ // TODO update value
                 to: contractAddress(voter_init),
@@ -45,7 +49,10 @@ contract Proposal {
                 bounce: true,
                 code: voter_init.code,
                 data: voter_init.data,
-                body: InitVoter{amount: msg.amount}.toCell()
+                body: InitVoter{
+                    amount: msg.amount,
+                    expires_at: self.expires_at
+                    }.toCell()
             }
         );
     }
@@ -94,6 +101,16 @@ contract Proposal {
     get fun expires_at(): Int {
         return self.expires_at;
     }
+
+    fun estimateStorageFee(expires_at: Int): Int {
+        let contract_size_bytes: Int = 300; // Approximate contract size
+        let per_byte_storage_fee: Int = 500; // Replace with actual network fee per byte
+
+        let remaining_time: Int = expires_at - now(); // Time left until expiration
+        nativeThrowUnless(ERROR_INVALID_EXPIRATION_TIME, remaining_time > 0);
+
+        return contract_size_bytes * per_byte_storage_fee * remaining_time;
+    }
 }
 
 contract Voter {
@@ -102,11 +119,13 @@ contract Voter {
     owner: Address;
     is_initialized: Bool = false;
     amount: Int = 0;
+    expires_at: Int as uint64;
 
     init(master: Address, proposal: Address, owner: Address){
         self.master = master;
         self.proposal = proposal;
         self.owner = owner;
+        self.expires_at = now() + LOCK_INTERVAL;
     }
 
     receive(msg: InitVoter){
@@ -116,16 +135,25 @@ contract Voter {
 
         self.is_initialized = true;
         self.amount = msg.amount;
+        self.expires_at = msg.expires_at;
     }
 
     receive(msg: UpdateVoterBalance){   
         nativeThrowIf(ERROR_CODE_INVALID_AMOUNT, msg.amount <= 0);             
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);  
+
+        if(!self.is_initialized){
+            self.expires_at = msg.voter_unlock_date;
+            let required_tons = self.estimateStorageFee(self.expires_at);
+            nativeThrowUnless(ERROR_INSUFFICIENT_STORAGE_FEE, msg.amount >= required_tons);
+        }
+
         let newAmount = !self.is_initialized ? msg.amount : msg.amount - self.amount;
 
         nativeThrowIf(ERROR_CODE_INVALID_AMOUNT, newAmount <= 0);
         self.is_initialized = true;
         self.amount = msg.amount;
+        
 
         send(SendParameters{
             to: self.proposal,
@@ -142,5 +170,16 @@ contract Voter {
 
     get fun get_voter_amount(): Int {
         return self.amount;
+    }
+
+    
+    fun estimateStorageFee(expires_at: Int): Int {
+        let contract_size_bytes: Int = 300; // Approximate contract size
+        let per_byte_storage_fee: Int = 500; // Replace with actual network fee per byte
+
+        let remaining_time: Int = expires_at - now(); // Time left until expiration
+        nativeThrowUnless(ERROR_INVALID_EXPIRATION_TIME, remaining_time > 0);
+
+        return contract_size_bytes * per_byte_storage_fee * remaining_time;
     }
 }
