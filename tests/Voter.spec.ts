@@ -12,6 +12,8 @@ describe('Voter', () => {
     let proposal: SandboxContract<TreasuryContract>;
     let voter: SandboxContract<Voter>;
 
+    let unlockDate = Math.floor(Date.now() / 1000 + 3600);
+
     beforeEach(async () => {
         blockchain = await Blockchain.create();
 
@@ -28,9 +30,10 @@ describe('Voter', () => {
             {
                 value: toNano("1"),
             },
-            {
+            { 
                 $$type: 'InitVoter',
                 amount: toNano("100"),
+                expires_at: BigInt(unlockDate),
             }
         );
         expect(firstInitResult.transactions).toHaveTransaction({
@@ -45,9 +48,10 @@ describe('Voter', () => {
             {
                 value: toNano("1"),
             },
-            {
+            { 
                 $$type: 'InitVoter',
-                amount: toNano("200"),
+                amount: toNano("100"),
+                expires_at: BigInt(unlockDate),
             }
         );
     
@@ -69,7 +73,7 @@ describe('Voter', () => {
                 $$type: 'UpdateVoterBalance',
                 amount: toNano("100"),
                 vote: BigInt(1),
-                voter_unlock_date: BigInt(Math.floor(Date.now() / 1000 + 3600)) 
+                voter_unlock_date: BigInt(unlockDate)
             }
         );
     
@@ -86,7 +90,11 @@ describe('Voter', () => {
         const result = await voter.send(
             deployer.getSender(),
             { value: toNano("1") },
-            { $$type: 'InitVoter', amount: toNano("100") }
+            { 
+                $$type: 'InitVoter',
+                amount: toNano("100"),
+                expires_at: BigInt(unlockDate),
+            }
         );
 
         expect(result.transactions).toHaveTransaction({
@@ -104,7 +112,7 @@ describe('Voter', () => {
                 $$type: 'UpdateVoterBalance',
                 amount: toNano("100"),
                 vote: BigInt(1),
-                voter_unlock_date: BigInt(Math.floor(Date.now() / 1000 + 3600)),
+                voter_unlock_date: BigInt(unlockDate),
             }
         );
     
@@ -125,7 +133,7 @@ describe('Voter', () => {
                 $$type: 'UpdateVoterBalance',
                 amount: toNano("100"),
                 vote: BigInt(1),
-                voter_unlock_date: BigInt(Math.floor(Date.now() / 1000 + 3600))
+                voter_unlock_date: BigInt(unlockDate)
             }
         );
     
@@ -146,7 +154,7 @@ describe('Voter', () => {
                 $$type: 'UpdateVoterBalance',
                 amount: toNano("150"),  // Different amount to ensure it's not the same input
                 vote: BigInt(0),        // Opposite vote
-                voter_unlock_date: BigInt(Math.floor(Date.now() / 1000 + 3600))
+                voter_unlock_date: BigInt(unlockDate)
             }
         );
     
@@ -169,7 +177,7 @@ describe('Voter', () => {
                 $$type: 'UpdateVoterBalance',
                 amount: toNano("0"),
                 vote: BigInt(1),
-                voter_unlock_date: BigInt(Math.floor(Date.now() / 1000 + 3600))
+                voter_unlock_date: BigInt(unlockDate)
             }
         );
     

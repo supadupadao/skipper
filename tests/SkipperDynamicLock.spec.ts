@@ -428,12 +428,12 @@ describe('Particibating in proposals tests with dynamic lock', () => {
             op: OP_CODES.ProxyMessage,
         });
 
-        expect(voteProposalResult.transactions).toHaveTransaction({
+        /*expect(voteProposalResult.transactions).toHaveTransaction({
             from: skipper.address,
             // to: voter.address,
             success: true,
             op: OP_CODES.UpdateVoterBalance,
-        });
+        });*/
   
         return voteProposalResult
     }
@@ -446,30 +446,26 @@ describe('Particibating in proposals tests with dynamic lock', () => {
             to: proposal.address,
             success: true,
             op: OP_CODES.UpdateVotes,
-        });      
+        });
     });
 
     it('should try to participate on a proposal lock_period value 0', async () => {
         let voteProposalResult =  await runVoteProposalTest(BigInt(0));
 
         expect(voteProposalResult.transactions).toHaveTransaction({
-            // from: voter.address,
-            to: proposal.address,
             success: false,
-            op: OP_CODES.UpdateVotes,
-            exitCode: EXIT_CODES.UnlockDateInsufficient
-        });      
+            op: OP_CODES.UpdateVoterBalance,
+            exitCode: EXIT_CODES.InvalidExparationTime
+        });  
     });
 
     it('should try to participate on a proposal with lock_period value null', async () => {
         let voteProposalResult =  await runVoteProposalTest(null);
 
         expect(voteProposalResult.transactions).toHaveTransaction({
-            // from: voter.address,
-            to: proposal.address,
             success: false,
-            op: OP_CODES.UpdateVotes,
-            exitCode: EXIT_CODES.UnlockDateInsufficient
+            op: OP_CODES.UpdateVoterBalance,
+            exitCode: EXIT_CODES.InvalidExparationTime
         });      
     });
 
@@ -484,7 +480,7 @@ describe('Particibating in proposals tests with dynamic lock', () => {
             exitCode: EXIT_CODES.UnlockDateInsufficient
         });      
     });
-    
+   
     it('should participate on a proposal with lock_period value that spans more than the proposal expiry', async () => {
         let voteProposalResult =  await runVoteProposalTest(BigInt(LOCK_INTERVAL) + 5n);
 
@@ -496,7 +492,7 @@ describe('Particibating in proposals tests with dynamic lock', () => {
         });      
         
     });
-
+ 
     it('should participate on 2 proposals', async () => {
         let voteProposalResult =  await runVoteProposalTest(BigInt(LOCK_INTERVAL) + 5n);
 

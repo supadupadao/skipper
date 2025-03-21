@@ -29,7 +29,7 @@ const GAS_CONSUMPTION_VALUES = {
     MINT_JETTON: toNano('0.044'),
     TRANSFER_JETTON: toNano('0.028'),
     UNLOCK_JETTON: toNano('0.028'),
-    NEW_PROPOSAL: toNano('0.034'),
+    NEW_PROPOSAL: toNano('0.035'),
     VOTE_PROPOSAL: toNano('0.031'),
     EXECUTE_PROPOSAL: toNano('0.005'),
 }

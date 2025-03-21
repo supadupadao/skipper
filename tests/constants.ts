@@ -40,5 +40,7 @@ export const EXIT_CODES = {
     UnlockDateInsufficient: 6910,
     InvalidLockPeriod: 6911, 
     LockPeriodTooShort: 6912,
-    InvalidAmount: 6913
+    InvalidAmount: 6913,
+    InsufficientStorageFees: 6914,
+    InvalidExparationTime: 6915
 };
