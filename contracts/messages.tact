@@ -55,6 +55,7 @@ message(0x690203) ExecuteProposal {
 /* 03 - Voter */
 message(0x690301) InitVoter {
     amount: Int as coins;
+    expires_at: Int as uint64;
 }
 message(0x690302) UpdateVoterBalance {
     amount: Int as coins;

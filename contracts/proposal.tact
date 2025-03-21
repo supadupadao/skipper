@@ -141,6 +141,7 @@ contract Voter {
     receive(msg: UpdateVoterBalance){   
         nativeThrowIf(ERROR_CODE_INVALID_AMOUNT, msg.amount <= 0);             
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);  
+        nativeThrowUnless(ERROR_INVALID_EXPIRATION_TIME, msg.voter_unlock_date > 0);
 
         if(!self.is_initialized){
             self.expires_at = msg.voter_unlock_date;
