@@ -3,13 +3,6 @@ import {  toNano , Cell} from '@ton/core';
 import '@ton/test-utils';
 import { EXIT_CODES, OP_CODES } from './constants';
 import { Voter } from '../wrappers/Voter';
-import { exitCode } from 'process';    
-
-function getContractSizeBytes(code: Cell, data: Cell): number {
-    const codeSize = code.bits.length;
-    const dataSize = data.bits.length;
-    return Math.ceil((codeSize + dataSize) / 8);
-}
 
 describe('Voter', () => {
     let blockchain: Blockchain;
