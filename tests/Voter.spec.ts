@@ -1,9 +1,15 @@
 import { Blockchain, SandboxContract, TreasuryContract } from '@ton/sandbox';
-import {  toNano } from '@ton/core';
+import {  toNano , Cell} from '@ton/core';
 import '@ton/test-utils';
 import { EXIT_CODES, OP_CODES } from './constants';
 import { Voter } from '../wrappers/Voter';
-import { exitCode } from 'process';
+import { exitCode } from 'process';    
+
+function getContractSizeBytes(code: Cell, data: Cell): number {
+    const codeSize = code.bits.length;
+    const dataSize = data.bits.length;
+    return Math.ceil((codeSize + dataSize) / 8);
+}
 
 describe('Voter', () => {
     let blockchain: Blockchain;
@@ -21,7 +27,7 @@ describe('Voter', () => {
         skipper = await blockchain.treasury('skipper');
         proposal = await blockchain.treasury('proposal');
 
-        voter = blockchain.openContract(await Voter.fromInit(skipper.address, proposal.address, deployer.address));
+        voter = blockchain.openContract(await Voter.fromInit(skipper.address, proposal.address, deployer.address));       
     });
     
     it('should not double init voter', async () => {
@@ -188,5 +194,31 @@ describe('Voter', () => {
             exitCode: EXIT_CODES.InvalidAmount
         });
     });    
+
+    it('should fail if balance is not enough storage', async () => {
+        const duration = 3600 * 24 * 365 * 15; // 15 years
+        const longUnlockDate = Math.floor(Date.now() / 1000 + duration);   
     
+        const insufficientValue = toNano("0.03"); 
+    
+        const result = await voter.send(
+            skipper.getSender(),
+            {
+                value: insufficientValue,
+            },
+            {
+                $$type: 'UpdateVoterBalance',
+                amount: toNano("100"),
+                vote: BigInt(1),
+                voter_unlock_date: BigInt(longUnlockDate),
+            }
+        );
+    
+        expect(result.transactions).toHaveTransaction({
+            from: skipper.address,
+            to: voter.address,
+            success: false,
+            exitCode: EXIT_CODES.InsufficientStorageFees, 
+        });
+    }); 
 });
