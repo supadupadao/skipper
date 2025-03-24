@@ -1,5 +1,5 @@
 import { Blockchain, SandboxContract, TreasuryContract } from '@ton/sandbox';
-import {  toNano , Cell} from '@ton/core';
+import { toNano } from '@ton/core';
 import '@ton/test-utils';
 import { EXIT_CODES, OP_CODES } from './constants';
 import { Voter } from '../wrappers/Voter';
@@ -188,16 +188,14 @@ describe('Voter', () => {
         });
     });    
 
-    it('should fail if balance is not enough storage', async () => {
+    it('should fail if balance is not enough storage fees', async () => {
         const duration = 3600 * 24 * 365 * 15; // 15 years
         const longUnlockDate = Math.floor(Date.now() / 1000 + duration);   
-    
-        const insufficientValue = toNano("0.03"); 
-    
+        
         const result = await voter.send(
             skipper.getSender(),
             {
-                value: insufficientValue,
+                value: toNano("0.03"),
             },
             {
                 $$type: 'UpdateVoterBalance',
