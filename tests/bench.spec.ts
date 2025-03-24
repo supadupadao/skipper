@@ -1,5 +1,5 @@
 import '@ton/test-utils';
-import { beginCell, comment, toNano } from '@ton/core';
+import { Cell , beginCell, comment, toNano , Address } from '@ton/core';
 import { Blockchain, BlockchainTransaction, SandboxContract, TreasuryContract } from '@ton/sandbox';
 import { JettonLock } from '../wrappers/Lock';
 import { JettonMaster } from './JettonMaster';
@@ -7,6 +7,8 @@ import { JettonWallet } from './JettonWallet';
 import { Skipper } from '../wrappers/Skipper';
 import { LOCK_INTERVAL, OP_CODES } from './constants';
 import { Proposal } from '../wrappers/Proposal';
+import { Voter } from '../wrappers/Voter';
+import { getContractStateSize } from '../scripts/getContractStateSize';
 
 const ROUND_COINS = 1000000n;
 
@@ -33,6 +35,14 @@ const GAS_CONSUMPTION_VALUES = {
     VOTE_PROPOSAL: toNano('0.031'),
     EXECUTE_PROPOSAL: toNano('0.005'),
 }
+
+const STATE_SIZE_VALUES = {
+    VOTER_BITS: 882,
+    VOTER_CELLS: 3,
+    PROPOSAL_BITS: 605,
+    PROPOSAL_CELLS: 3,
+};
+
 
 describe('Gas consumption benchmark', () => {
     let blockchain: Blockchain;
@@ -231,5 +241,22 @@ describe('Gas consumption benchmark', () => {
         );
         expect(executeProposal.transactions).not.toHaveTransaction({ success: false });
         expect(measureGas(executeProposal.transactions)).toEqual(GAS_CONSUMPTION_VALUES.EXECUTE_PROPOSAL);
+    });   
+    
+    it('should match VOTER_BITS and VOTER_CELLS constants', async () => {
+        const init = await Voter.init(skipper.address, proposal.address, deployer.address);
+        const { bits, cells } = getContractStateSize(init);
+    
+        expect(bits).toEqual(STATE_SIZE_VALUES.VOTER_BITS);
+        expect(cells).toEqual(STATE_SIZE_VALUES.VOTER_CELLS);
     });
+    
+    it('should match PROPOSAL_BITS and PROPOSAL_CELLS constants', async () => {
+        const init = await Proposal.init(skipper.address, 1n);
+        const { bits, cells } = getContractStateSize(init);
+    
+        expect(bits).toEqual(STATE_SIZE_VALUES.PROPOSAL_BITS);
+        expect(cells).toEqual(STATE_SIZE_VALUES.PROPOSAL_CELLS);
+    });
+    
 });
