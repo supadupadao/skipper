@@ -5,8 +5,8 @@ import "./utils/storage.tact";
 
 const PROPOSAL_ACCEPT_THRESHOLD: Int = ton("300000");
 const PROPOSAL_VOTES_GAP: Int = ton("10000");
-const PROPOSAL_BITS: Int = 605;
-const PROPOSAL_CELLS: Int = 3;
+const PROPOSAL_BITS: Int = 29175;
+const PROPOSAL_CELLS: Int = 73;
 
 contract Proposal {
     master: Address;
@@ -110,8 +110,8 @@ contract Proposal {
     }
 }
 
-const VOTER_BITS: Int = 882;
-const VOTER_CELLS: Int = 3;
+const VOTER_BITS: Int = 16032;
+const VOTER_CELLS: Int = 22;
 
 contract Voter {
     master: Address;
