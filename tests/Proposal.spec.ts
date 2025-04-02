@@ -197,4 +197,39 @@ describe('Proposal', () => {
             exitCode: EXIT_CODES.ProposalExpired,
         });
     });
+
+    it('should fail if balance is not enough storage fees', async () => {
+        let startTime = Math.floor(Date.now() / 1000);
+        blockchain.now = startTime;
+        
+        const duration = 3600 * 24 * 365 * 15; // 15 years
+        const longUnlockDate = Math.floor(Date.now() / 1000 + duration);   
+    
+        const result = await proposal.send(
+            skipper.getSender(),
+            {
+                value: toNano("0.03"), 
+            },
+            {
+                $$type: "InitProposal",
+                amount: toNano("0.03"),
+                initiator: deployer.address,
+                lock_period: BigInt(longUnlockDate), 
+                data: {
+                    $$type: 'ProposalData',
+                    body: beginCell().asCell(),
+                    receiver: deployer.address,
+                }
+            }
+        );
+    
+        expect(result.transactions).toHaveTransaction({
+            from: skipper.address,
+            to: proposal.address,
+            success: false,
+            op: OP_CODES.InitProposal,
+            exitCode: EXIT_CODES.InsufficientStorageFees,
+        });
+    });
+    
 });

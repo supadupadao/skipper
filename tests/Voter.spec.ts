@@ -1,9 +1,8 @@
 import { Blockchain, SandboxContract, TreasuryContract } from '@ton/sandbox';
-import {  toNano } from '@ton/core';
+import { toNano } from '@ton/core';
 import '@ton/test-utils';
 import { EXIT_CODES, OP_CODES } from './constants';
 import { Voter } from '../wrappers/Voter';
-import { exitCode } from 'process';
 
 describe('Voter', () => {
     let blockchain: Blockchain;
@@ -12,6 +11,8 @@ describe('Voter', () => {
     let proposal: SandboxContract<TreasuryContract>;
     let voter: SandboxContract<Voter>;
 
+    let unlockDate = Math.floor(Date.now() / 1000 + 3600);
+
     beforeEach(async () => {
         blockchain = await Blockchain.create();
 
@@ -19,7 +20,7 @@ describe('Voter', () => {
         skipper = await blockchain.treasury('skipper');
         proposal = await blockchain.treasury('proposal');
 
-        voter = blockchain.openContract(await Voter.fromInit(skipper.address, proposal.address, deployer.address));
+        voter = blockchain.openContract(await Voter.fromInit(skipper.address, proposal.address, deployer.address));       
     });
     
     it('should not double init voter', async () => {
@@ -28,9 +29,10 @@ describe('Voter', () => {
             {
                 value: toNano("1"),
             },
-            {
+            { 
                 $$type: 'InitVoter',
                 amount: toNano("100"),
+                expires_at: BigInt(unlockDate),
             }
         );
         expect(firstInitResult.transactions).toHaveTransaction({
@@ -45,9 +47,10 @@ describe('Voter', () => {
             {
                 value: toNano("1"),
             },
-            {
+            { 
                 $$type: 'InitVoter',
-                amount: toNano("200"),
+                amount: toNano("100"),
+                expires_at: BigInt(unlockDate),
             }
         );
     
@@ -69,7 +72,7 @@ describe('Voter', () => {
                 $$type: 'UpdateVoterBalance',
                 amount: toNano("100"),
                 vote: BigInt(1),
-                voter_unlock_date: BigInt(Math.floor(Date.now() / 1000 + 3600)) 
+                voter_unlock_date: BigInt(unlockDate)
             }
         );
     
@@ -86,7 +89,11 @@ describe('Voter', () => {
         const result = await voter.send(
             deployer.getSender(),
             { value: toNano("1") },
-            { $$type: 'InitVoter', amount: toNano("100") }
+            { 
+                $$type: 'InitVoter',
+                amount: toNano("100"),
+                expires_at: BigInt(unlockDate),
+            }
         );
 
         expect(result.transactions).toHaveTransaction({
@@ -104,7 +111,7 @@ describe('Voter', () => {
                 $$type: 'UpdateVoterBalance',
                 amount: toNano("100"),
                 vote: BigInt(1),
-                voter_unlock_date: BigInt(Math.floor(Date.now() / 1000 + 3600)),
+                voter_unlock_date: BigInt(unlockDate),
             }
         );
     
@@ -125,7 +132,7 @@ describe('Voter', () => {
                 $$type: 'UpdateVoterBalance',
                 amount: toNano("100"),
                 vote: BigInt(1),
-                voter_unlock_date: BigInt(Math.floor(Date.now() / 1000 + 3600))
+                voter_unlock_date: BigInt(unlockDate)
             }
         );
     
@@ -146,7 +153,7 @@ describe('Voter', () => {
                 $$type: 'UpdateVoterBalance',
                 amount: toNano("150"),  // Different amount to ensure it's not the same input
                 vote: BigInt(0),        // Opposite vote
-                voter_unlock_date: BigInt(Math.floor(Date.now() / 1000 + 3600))
+                voter_unlock_date: BigInt(unlockDate)
             }
         );
     
@@ -169,7 +176,7 @@ describe('Voter', () => {
                 $$type: 'UpdateVoterBalance',
                 amount: toNano("0"),
                 vote: BigInt(1),
-                voter_unlock_date: BigInt(Math.floor(Date.now() / 1000 + 3600))
+                voter_unlock_date: BigInt(unlockDate)
             }
         );
     
@@ -180,5 +187,29 @@ describe('Voter', () => {
             exitCode: EXIT_CODES.InvalidAmount
         });
     });    
+
+    it('should fail if balance is not enough storage fees', async () => {
+        const duration = 3600 * 24 * 365 * 15; // 15 years
+        const longUnlockDate = Math.floor(Date.now() / 1000 + duration);   
+        
+        const result = await voter.send(
+            skipper.getSender(),
+            {
+                value: toNano("0.03"),
+            },
+            {
+                $$type: 'UpdateVoterBalance',
+                amount: toNano("100"),
+                vote: BigInt(1),
+                voter_unlock_date: BigInt(longUnlockDate),
+            }
+        );
     
+        expect(result.transactions).toHaveTransaction({
+            from: skipper.address,
+            to: voter.address,
+            success: false,
+            exitCode: EXIT_CODES.InsufficientStorageFees, 
+        });
+    }); 
 });
