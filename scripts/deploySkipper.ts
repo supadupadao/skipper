@@ -1,9 +1,11 @@
-import { toNano } from '@ton/core';
+import { Address, toNano } from '@ton/core';
 import { Skipper } from '../wrappers/Skipper';
 import { NetworkProvider } from '@ton/blueprint';
 
+const JETTON_MASTER_ADDRESS = process.env.JETTON_MASTER_ADDRESS;
+
 export async function run(provider: NetworkProvider) {
-    const skipper = provider.open(await Skipper.fromInit());
+    const skipper = provider.open(await Skipper.fromInit(Address.parse(JETTON_MASTER_ADDRESS!!)));
 
     await skipper.send(
         provider.sender(),
@@ -17,6 +19,4 @@ export async function run(provider: NetworkProvider) {
     );
 
     await provider.waitForDeploy(skipper.address);
-
-    // run methods on `skipper`
 }
