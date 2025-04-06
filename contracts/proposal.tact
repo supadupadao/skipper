@@ -101,7 +101,7 @@ contract Proposal {
         );
     }
 
-    get fun get_proposal_data(): ProposalData? {
+    get fun get_proposal_data(): ProposalData {
         return ProposalData{
             proposal_id: self.proposal_id,
             is_initialized: self.is_initialized,
@@ -186,7 +186,13 @@ contract Voter {
         });
     }
 
-    get fun get_voter_amount(): Int {
-        return self.amount;
+    get fun get_voter_data(): VoterData {
+        return VoterData{
+            proposal: self.proposal,
+            owner: self.owner,
+            is_initialized: self.is_initialized,
+            amount: self.amount,
+            expires_at: self.expires_at
+        };
     }
 }
