@@ -5,7 +5,7 @@ import "./utils/storage.tact";
 
 const PROPOSAL_ACCEPT_THRESHOLD: Int = ton("300000");
 const PROPOSAL_VOTES_GAP: Int = ton("10000");
-const PROPOSAL_BITS: Int = 29175;
+const PROPOSAL_BITS: Int = 29429;
 const PROPOSAL_CELLS: Int = 73;
 
 contract Proposal {
@@ -16,7 +16,7 @@ contract Proposal {
     votes_yes: Int as coins = 0;
     votes_no: Int as coins = 0;
     expires_at: Int as uint64;
-    data: ProposalData? = null;
+    payload: ProposalPayload? = null;
     
     init(master: Address, proposal_id: Int) {
         self.master = master;
@@ -28,7 +28,7 @@ contract Proposal {
         nativeThrowIf(ERROR_ALREADY_INITIALIZED, self.is_initialized);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);
 
-        self.data = msg.data;
+        self.payload = msg.payload;
         self.votes_yes = msg.amount;
         let voter_init: StateInit = initOf Voter(self.master, myAddress(), msg.initiator);
         self.is_initialized = true;
@@ -88,25 +88,29 @@ contract Proposal {
         nativeThrowIf(ERROR_ALREADY_EXECUTED, self.is_executed);
         nativeThrowUnless(ERROR_NOT_ENOUGH_VOTES, self.votes_yes > PROPOSAL_ACCEPT_THRESHOLD);
         nativeThrowUnless(ERROR_TOO_MANY_NO_VOTES, self.votes_yes > (self.votes_no + PROPOSAL_VOTES_GAP));
-        nativeThrowUnless(ERROR_NOT_INITIALIZED, self.data != null);
+        nativeThrowUnless(ERROR_NOT_INITIALIZED, self.payload != null);
 
         self.is_executed = true;
         send(SendParameters{
-                to: self.data!!.receiver,
+                to: self.payload!!.receiver,
                 value: 0,
                 bounce: false,
                 mode: SendRemainingBalance,
-                body: self.data!!.body,
+                body: self.payload!!.body,
             }
         );
     }
 
-    get fun get_proposal_data(): ProposalData? {
-        return self.data;
-    }
-    
-    get fun expires_at(): Int {
-        return self.expires_at;
+    get fun get_proposal_data(): ProposalData {
+        return ProposalData{
+            proposal_id: self.proposal_id,
+            is_initialized: self.is_initialized,
+            is_executed: self.is_executed,
+            votes_yes: self.votes_yes,
+            votes_no: self.votes_no,
+            expires_at: self.expires_at,
+            payload: self.payload
+        };
     }
 }
 
@@ -182,7 +186,13 @@ contract Voter {
         });
     }
 
-    get fun get_voter_amount(): Int {
-        return self.amount;
+    get fun get_voter_data(): VoterData {
+        return VoterData{
+            proposal: self.proposal,
+            owner: self.owner,
+            is_initialized: self.is_initialized,
+            amount: self.amount,
+            expires_at: self.expires_at
+        };
     }
 }

@@ -180,8 +180,13 @@ describe('Integration tests', () => {
         });
 
         const proposalData = await proposal.getGetProposalData();
-        expect(proposalData?.receiver.toString()).toEqual(deployer.address.toString());
-        // TODO validate proposal data payload
+        expect(proposalData?.payload?.receiver.toString()).toEqual(deployer.address.toString());
+        expect(proposalData?.payload?.body.toString()).toEqual(beginCell().endCell().toString());
+        expect(proposalData?.votes_no).toEqual(0n);
+        expect(proposalData?.votes_yes).toEqual(toNano("200000"));
+        expect(proposalData?.is_executed).toEqual(false);
+        expect(proposalData?.is_initialized).toEqual(true);
+        expect(proposalData?.proposal_id).toEqual(1n);
     });
 
     it('should increase vote for proposal', async () => {        

@@ -72,16 +72,15 @@ describe('Initializing proposals tests with dynamic lock', () => {
 
         // Check the proposal data
         const proposalData = await proposal.getGetProposalData();
-        expect(proposalData?.receiver.toString()).toEqual(deployer.address.toString());
-
-        // Decode the body of ProposalData
-        const proposalDataSlice = proposalData!.body.beginParse();
-        const randomInt = proposalDataSlice.loadUint(256);
-        expect(randomInt).toEqual(random);
+        expect(proposalData?.payload?.receiver.toString()).toEqual(deployer.address.toString());
 
         //check the expiry date for the proposal
-        const expiresAt = await proposal.getExpiresAt();
-        expect(expiresAt).toEqual(BigInt(blockchain.now + expectedLockInterval));
+        expect(proposalData?.expires_at).toEqual(BigInt(blockchain.now + expectedLockInterval));
+
+        // Decode the body of ProposalData
+        const proposalDataSlice = proposalData!.payload?.body.beginParse();
+        const randomInt = proposalDataSlice?.loadUint(256);
+        expect(randomInt).toEqual(random);
     }
     
     beforeEach(async () => {
@@ -385,16 +384,15 @@ describe('Particibating in proposals tests with dynamic lock', () => {
 
         // Check the proposal data
         const proposalData = await proposal.getGetProposalData();
-        expect(proposalData?.receiver.toString()).toEqual(deployer.address.toString());
-
-        // Decode the body of ProposalData
-        const proposalDataSlice = proposalData!.body.beginParse();
-        const randomInt = proposalDataSlice.loadUint(256);
-        expect(randomInt).toEqual(random);
+        expect(proposalData?.payload?.receiver.toString()).toEqual(deployer.address.toString());
 
         //check the expiry date for the proposal
-        const expiresAt = await proposal.getExpiresAt();
-        expect(expiresAt).toEqual(BigInt(blockchain.now + LOCK_INTERVAL));
+        expect(proposalData?.expires_at).toEqual(BigInt(blockchain.now + LOCK_INTERVAL));
+
+        // Decode the body of ProposalData
+        const proposalDataSlice = proposalData!.payload?.body.beginParse();
+        const randomInt = proposalDataSlice?.loadUint(256);
+        expect(randomInt).toEqual(random);
     });
 
     //Runs the vote proposal votes for user2

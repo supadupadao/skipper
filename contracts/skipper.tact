@@ -33,7 +33,7 @@ contract Skipper with Deployable {
                     body: InitProposal{
                         initiator: msg.owner,
                         amount: msg.amount,
-                        data: payload.data,
+                        payload: payload.payload,
                         lock_period: msg.lock_period // period to lock the contract (for init only)
                     }.toCell()
                 }

@@ -81,8 +81,8 @@ describe('Proposal', () => {
                 amount: toNano("100500"),
                 initiator: deployer.address,
                 lock_period: null,
-                data: {
-                    $$type: 'ProposalData',
+                payload: {
+                    $$type: 'ProposalPayload',
                     body: beginCell().asCell(),
                     receiver: deployer.address,
                 }
@@ -105,8 +105,8 @@ describe('Proposal', () => {
                 amount: toNano("100500"),
                 initiator: deployer.address,
                 lock_period: null,
-                data: {
-                    $$type: 'ProposalData',
+                payload: {
+                    $$type: 'ProposalPayload',
                     body: beginCell().asCell(),
                     receiver: deployer.address,
                 }
@@ -136,8 +136,8 @@ describe('Proposal', () => {
                 amount: toNano("100500"),
                 initiator: deployer.address,
                 lock_period: null,
-                data: {
-                    $$type: 'ProposalData',
+                payload: {
+                    $$type: 'ProposalPayload',
                     body: beginCell().asCell(),
                     receiver: deployer.address,
                 }
@@ -215,8 +215,8 @@ describe('Proposal', () => {
                 amount: toNano("0.03"),
                 initiator: deployer.address,
                 lock_period: BigInt(longUnlockDate), 
-                data: {
-                    $$type: 'ProposalData',
+                payload: {
+                    $$type: 'ProposalPayload',
                     body: beginCell().asCell(),
                     receiver: deployer.address,
                 }
