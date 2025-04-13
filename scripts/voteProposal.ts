@@ -19,6 +19,7 @@ export async function run(provider: NetworkProvider) {
     {
       $$type: 'SendProxyMessage',
       to: skipper.address,
+      lock_period: null,
       payload: beginCell()
         .storeUint(0x690402, 32)
         .storeUint(PROPOSAL_ID, 64)
