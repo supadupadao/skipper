@@ -18,7 +18,8 @@ contract Skipper with Deployable {
         let jetton_lock_address = contractAddress(jetton_lock_init);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == jetton_lock_address);
         let op = msg.payload.asSlice().loadUint(32);
-        if (op == 0x690401) {
+
+        if (op == 0x690401) {            
             let payload = RequestNewProposal.fromCell(msg.payload);
             self.last_proposal_id += 1;
             let new_proposal_init = initOf Proposal(myAddress(), self.last_proposal_id);
@@ -29,7 +30,12 @@ contract Skipper with Deployable {
                     bounce: false,
                     code: new_proposal_init.code,
                     data: new_proposal_init.data,
-                    body: InitProposal{initiator: msg.owner, amount: msg.amount, data: payload.data}.toCell()
+                    body: InitProposal{
+                        initiator: msg.owner,
+                        amount: msg.amount,
+                        payload: payload.payload,
+                        lock_period: msg.lock_period // period to lock the contract (for init only)
+                    }.toCell()
                 }
             );
             return;
@@ -37,7 +43,7 @@ contract Skipper with Deployable {
         if (op == 0x690402) {
             let payload = VoteForProposal.fromCell(msg.payload);
             let proposal_init = initOf Proposal(myAddress(), payload.proposal_id);
-            let voter_init = initOf Voter(myAddress(), contractAddress(proposal_init), msg.owner);
+            let voter_init = initOf Voter(myAddress(), contractAddress(proposal_init), msg.owner);            
             send(SendParameters{
                     to: contractAddress(voter_init),
                     value: 0,
@@ -45,7 +51,11 @@ contract Skipper with Deployable {
                     code: voter_init.code,
                     data: voter_init.data,
                     bounce: false,
-                    body: UpdateVoterBalance{amount: msg.amount, vote: payload.vote}.toCell()
+                    body: UpdateVoterBalance{
+                        amount: msg.amount,
+                        voter_unlock_date: msg.voter_unlock_date, // unlock date of the voters tokens
+                        vote: payload.vote
+                    }.toCell()
                 }
             );
             return;
@@ -57,13 +67,13 @@ contract Skipper with Deployable {
         return SkipperData{last_proposal_id: self.last_proposal_id};
     }
 
-    get fun get_proposal_address(proposal_id: Int): Address {
-        let init = initOf Proposal(myAddress(), proposal_id);
-        return contractAddress(init);
-    }
-
     get fun get_lock_address(owner: Address): Address {
         let init = initOf JettonLock(owner, self.jetton_master);
+        return contractAddress(init);
+    }
+    
+    get fun get_proposal_address(proposal_id: Int): Address {
+        let init = initOf Proposal(myAddress(), proposal_id);
         return contractAddress(init);
     }
 }
