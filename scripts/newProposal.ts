@@ -13,7 +13,7 @@ export async function run(provider: NetworkProvider) {
   await lock.send(
     provider.sender(),
     {
-      value: toNano('0.05'),
+      value: toNano('0.1'),
     },
     {
       $$type: 'SendProxyMessage',

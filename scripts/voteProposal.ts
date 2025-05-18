@@ -5,7 +5,7 @@ import { JettonLock } from '../wrappers/Lock';
 import { Proposal } from '../wrappers/Proposal';
 
 const JETTON_MASTER_ADDRESS = process.env.JETTON_MASTER_ADDRESS;
-const PROPOSAL_ID = 0;
+const PROPOSAL_ID = 1;
 
 export async function run(provider: NetworkProvider) {
   const skipper = provider.open(await Skipper.fromInit(Address.parse(JETTON_MASTER_ADDRESS!)));
@@ -14,7 +14,7 @@ export async function run(provider: NetworkProvider) {
   await lock.send(
     provider.sender(),
     {
-      value: toNano('0.05'),
+      value: toNano('0.1'),
     },
     {
       $$type: 'SendProxyMessage',
