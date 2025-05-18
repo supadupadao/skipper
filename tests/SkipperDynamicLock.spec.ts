@@ -88,7 +88,7 @@ describe('Initializing proposals tests with dynamic lock', () => {
 
         deployer = await blockchain.treasury('deployer');
 
-        jetton_master = blockchain.openContract(await JettonMaster.fromInit(deployer.address));
+        jetton_master = blockchain.openContract(await JettonMaster.fromInit(deployer.address, 0n));
         jetton_wallet = blockchain.openContract(await JettonWallet.fromInit(jetton_master.address, deployer.address));
         skipper = blockchain.openContract(await Skipper.fromInit(jetton_master.address));
         lock = blockchain.openContract(await JettonLock.fromInit(deployer.address, jetton_master.address));
@@ -207,7 +207,7 @@ describe('Particibating in proposals tests with dynamic lock', () => {
         deployer = await blockchain.treasury('deployer');
         user2 = await blockchain.treasury('user2');
 
-        jetton_master = blockchain.openContract(await JettonMaster.fromInit(deployer.address));
+        jetton_master = blockchain.openContract(await JettonMaster.fromInit(deployer.address, 0n));
         jetton_wallet = blockchain.openContract(await JettonWallet.fromInit(jetton_master.address, deployer.address));
         user2_jetton_wallet = blockchain.openContract(await JettonWallet.fromInit(jetton_master.address, user2.address));
 
