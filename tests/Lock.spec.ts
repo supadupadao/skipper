@@ -17,7 +17,7 @@ describe('Success lock behavior', () => {
         blockchain = await Blockchain.create();
 
         deployer = await blockchain.treasury('deployer');
-        jetton_master = blockchain.openContract(await JettonMaster.fromInit(deployer.address));
+        jetton_master = blockchain.openContract(await JettonMaster.fromInit(deployer.address, 0n));
         jetton_wallet = blockchain.openContract(await JettonWallet.fromInit(jetton_master.address, deployer.address));
         lock = blockchain.openContract(await JettonLock.fromInit(deployer.address, jetton_master.address));
 
@@ -181,7 +181,7 @@ describe('Error handling for lock', () => {
         blockchain = await Blockchain.create();
 
         deployer = await blockchain.treasury('deployer');
-        jetton_master = blockchain.openContract(await JettonMaster.fromInit(deployer.address));
+        jetton_master = blockchain.openContract(await JettonMaster.fromInit(deployer.address, 0n));
         jetton_wallet = blockchain.openContract(await JettonWallet.fromInit(jetton_master.address, deployer.address));
         other_contract = await blockchain.treasury('other_contract');
         lock = blockchain.openContract(await JettonLock.fromInit(deployer.address, jetton_master.address));

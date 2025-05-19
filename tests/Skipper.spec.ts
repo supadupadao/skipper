@@ -68,7 +68,7 @@ describe('Integration tests', () => {
 
         deployer = await blockchain.treasury('deployer');
 
-        jetton_master = blockchain.openContract(await JettonMaster.fromInit(deployer.address));
+        jetton_master = blockchain.openContract(await JettonMaster.fromInit(deployer.address, 0n));
         jetton_wallet = blockchain.openContract(await JettonWallet.fromInit(jetton_master.address, deployer.address));
         skipper = blockchain.openContract(await Skipper.fromInit(jetton_master.address));
         lock = blockchain.openContract(await JettonLock.fromInit(deployer.address, jetton_master.address));

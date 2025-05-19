@@ -26,9 +26,9 @@ function measureGas(transactions: BlockchainTransaction[]): bigint {
 }
 
 const GAS_CONSUMPTION_VALUES = {
-    DEPLOY_SKIPPER: toNano('0.039'),
-    DEPLOY_LOCK: toNano('0.022'),
-    MINT_JETTON: toNano('0.044'),
+    DEPLOY_SKIPPER: toNano('0.040'),
+    DEPLOY_LOCK: toNano('0.023'),
+    MINT_JETTON: toNano('0.048'),
     TRANSFER_JETTON: toNano('0.028'),
     UNLOCK_JETTON: toNano('0.028'),
     NEW_PROPOSAL: toNano('0.035'),
@@ -58,7 +58,7 @@ describe('Gas consumption benchmark', () => {
         blockchain = await Blockchain.create();
 
         deployer = await blockchain.treasury('deployer');
-        jetton_master = blockchain.openContract(await JettonMaster.fromInit(deployer.address));
+        jetton_master = blockchain.openContract(await JettonMaster.fromInit(deployer.address, 0n));
         jetton_wallet = blockchain.openContract(await JettonWallet.fromInit(jetton_master.address, deployer.address));
         lock = blockchain.openContract(await JettonLock.fromInit(deployer.address, jetton_master.address));
         skipper = blockchain.openContract(await Skipper.fromInit(jetton_master.address));
