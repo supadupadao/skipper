@@ -35,6 +35,11 @@ struct VoterData {
     amount: Int as coins;
     expires_at: Int as uint64;
 }
+/* 00 - Minter messages */
+message(0x690001) DeploySkipper {
+    query_id: Int as uint64;
+    jetton_master: Address;
+}
 /* 01 - Lock messages */
 message(0x690101) SendProxyMessage {
     to: Address;
