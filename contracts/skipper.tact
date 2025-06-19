@@ -1,7 +1,26 @@
 import "@stdlib/deploy";
-import "./consts.tact";
 import "./lock.tact";
 import "./proposal.tact";
+import "./messages";
+
+contract Minter with Deployable {
+    receive(msg: DeploySkipper) {
+        let skipper_init = initOf Skipper(msg.jetton_master);
+        send(SendParameters {
+            to: contractAddress(skipper_init),
+            code: skipper_init.code,
+            data: skipper_init.data,
+            value: 0,
+            mode: SendRemainingValue,
+            body: Deploy {
+                queryId: msg.query_id,
+            }.toCell(),
+        });
+    }
+
+    receive(_msg: Slice) {}
+}
+
 struct SkipperData {
     last_proposal_id: Int as uint64;
 }
