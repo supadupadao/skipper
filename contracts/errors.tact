@@ -26,7 +26,8 @@ const ERROR_INVALID_LOCK_PERIOD: Int = 6911;
 const ERROR_LOCK_PERIOD_TOO_SHORT: Int = 6912;
 // Amount provided must be greater than zero
 const ERROR_CODE_INVALID_AMOUNT: Int = 6913;
-
+// Insufficient storage fee for the contract
 const ERROR_INSUFFICIENT_STORAGE_FEE: Int = 6914;
-
+// Invalid expiration time for proposal or voter
 const ERROR_INVALID_EXPIRATION_TIME: Int = 6915;
+// Invalid owner address for jetton wallet

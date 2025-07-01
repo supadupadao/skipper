@@ -8,7 +8,10 @@ export const ZERO_ADDRESS = address("0:00000000000000000000000000000000000000000
 export const OP_CODES = {
     /* Standard jetton messages */
     JettonTransferNotification: 0x7362d09c, // Notification about transfer from jetton wallet to owner
+    JettonTransferInternal: 0x178d4519,     // Internal transfer from jetton wallet to owner
     JettonTransfer: 0x0f8a7ea5,             // New jetton transfer
+    ProvideWalletAddress: 0x2c76b973,       // Provide jetton wallet owner address
+    TakeWalletAddress: 0xd1735400,          // Send jetton wallet address to requester
     /* 01 - Lock messages */
     SendProxyMessage: 0x690101,             // Proxy message if sender is lock owner
     ProxyMessage: 0x690102,                 // Proxy message body
