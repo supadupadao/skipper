@@ -12,6 +12,7 @@ describe('Success lock behavior', () => {
     let lock: SandboxContract<JettonLock>;
     let jetton_master: SandboxContract<JettonMaster>;
     let jetton_wallet: SandboxContract<JettonWallet>;
+    let lock_jetton_wallet: SandboxContract<JettonWallet>;
 
     beforeAll(async () => {
         blockchain = await Blockchain.create();
@@ -20,6 +21,7 @@ describe('Success lock behavior', () => {
         jetton_master = blockchain.openContract(await JettonMaster.fromInit(deployer.address, 0n));
         jetton_wallet = blockchain.openContract(await JettonWallet.fromInit(jetton_master.address, deployer.address));
         lock = blockchain.openContract(await JettonLock.fromInit(deployer.address, jetton_master.address));
+        lock_jetton_wallet = blockchain.openContract(await JettonWallet.fromInit(jetton_master.address, lock.address));
 
         await lock.send(
             deployer.getSender(),
@@ -48,6 +50,13 @@ describe('Success lock behavior', () => {
     });
 
     it('should handle transfer notification', async () => {
+        // User
+        // -> User jetton wallet (transfer)
+        // -> Lock jetton wallet (transfer internal)
+        // -> Lock (transfer notification)
+        // -> JettonMaster (provide address)
+        // -> Lock (take address)
+
         let startTime = Math.floor(Date.now() / 1000);
 
         blockchain.now = startTime;
@@ -67,10 +76,48 @@ describe('Success lock behavior', () => {
                 response_destination: lock.address,
             }
         );
+
         expect(transferNotification.transactions).toHaveTransaction({
+            from: deployer.address,
+            to: jetton_wallet.address,
+            success: true,
+            op: OP_CODES.JettonTransfer,
+        });
+        expect(transferNotification.transactions).toHaveTransaction({
+            from: jetton_wallet.address,
+            to: lock_jetton_wallet.address,
+            success: true,
+            op: OP_CODES.JettonTransferInternal,
+        });
+        expect(transferNotification.transactions).toHaveTransaction({
+            from: lock_jetton_wallet.address,
             to: lock.address,
             success: true,
             op: OP_CODES.JettonTransferNotification,
+        });
+        expect(transferNotification.transactions).toHaveTransaction({
+            from: lock.address,
+            to: jetton_master.address,
+            success: true,
+            op: OP_CODES.ProvideWalletAddress,
+            body: beginCell()
+                .storeUint(OP_CODES.ProvideWalletAddress, 32)
+                .storeUint(0n, 64) // query_id
+                .storeAddress(lock.address)
+                .storeBit(true)
+                .endCell()
+        });
+        expect(transferNotification.transactions).toHaveTransaction({
+            from: jetton_master.address,
+            to: lock.address,
+            success: true,
+            op: OP_CODES.TakeWalletAddress,
+            body: beginCell()
+                .storeUint(OP_CODES.TakeWalletAddress, 32)
+                .storeUint(0n, 64) // query_id
+                .storeAddress(lock_jetton_wallet.address)
+                .storeAddress(lock.address)
+                .endCell()
         });
 
         const lockData = await lock.getGetLockData();
@@ -212,8 +259,8 @@ describe('Error handling for lock', () => {
         expect(jettonWalletData.balance).toEqual(toNano('100500'));
     });
 
-    it('should validate jetton wallet address', async () => {
-        const transferNotification = await lock.send(
+    it('should validate jetton wallet address', async () => {        
+        const transferNotification1 = await lock.send(
             other_contract.getSender(),
             {
                 value: toNano('0.05'),
@@ -226,7 +273,21 @@ describe('Error handling for lock', () => {
                 forward_payload: beginCell().asSlice(),
             }
         );
-        expect(transferNotification.transactions).toHaveTransaction({
+
+        const transferNotification2 = await lock.send(
+            other_contract.getSender(),
+            {
+                value: toNano('0.05'),
+            },
+            {
+                $$type: 'JettonTransferNotification',
+                query_id: 0n,
+                amount: toNano('100500'),
+                sender: deployer.address,
+                forward_payload: beginCell().asSlice(),
+            }
+        );
+        expect(transferNotification2.transactions).toHaveTransaction({
             from: other_contract.address,
             to: lock.address,
             success: false,
