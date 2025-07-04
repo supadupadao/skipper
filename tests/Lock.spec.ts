@@ -238,6 +238,7 @@ describe('Success lock behavior', () => {
     });
 
     it('validate minter.ton.org jetton discovery 1', async () => {
+        // TX https://testnet.tonviewer.com/transaction/e80142e8e3215775636e8c748e5ee486f68690fd9e2737b48ee5341d92900ccc
         validateJettonDiscovery(
             Cell.fromHex("b5ee9c7201010101003000005b2c76b973000000000000000080121b65243c0750380e7c2dd2cb85cd0d4e22bd80ca662b46528b5f177371f3c978"),
             Cell.fromHex("b5ee9c7201010201005500015bd1735400000000000000000080185c00699fb594fd4f969e4bcf464866d2620c1b9f4830ad24a1fc7072a733067801004380121b65243c0750380e7c2dd2cb85cd0d4e22bd80ca662b46528b5f177371f3c970"),
@@ -247,6 +248,7 @@ describe('Success lock behavior', () => {
     });
 
     it('validate minter.ton.org jetton discovery 2', async () => {
+        // TX https://testnet.tonviewer.com/transaction/e597041abf9f766bfadbbec9a8b64e8b2975c418e2caa7f4a9aa78448ba1ed6d
         validateJettonDiscovery(
             Cell.fromHex("b5ee9c7201010101003000005b2c76b9730000000000000000800a00719576e4e04ed8f23109a9b4934f412ac824499d4a68155545c52b829baef8"),
             Cell.fromHex("b5ee9c7201010201005500015bd17354000000000000000000801186322fb8fbb745ba91becc67e7f69831988f98a58f7c3755e4230714c011ebf8010043800a00719576e4e04ed8f23109a9b4934f412ac824499d4a68155545c52b829baef0"),
@@ -255,8 +257,19 @@ describe('Success lock behavior', () => {
         );
     });
 
-    // Seems like Ston.fi Test jetton is broken, so we skip this test for now
+    it('validate random jetton discovery', async () => {
+        // TX https://testnet.tonviewer.com/transaction/07f2eb791c1c393d374dd817ea091e503cc764514e357d923884b32786a4f3fa
+        validateJettonDiscovery(
+            Cell.fromHex("b5ee9c7201010101003000005b2c76b9730000000000000000801cefb507b28f2b9a56974c3c476b608d5f6f2dae14958c625c4bcd7bc0f701aa78"),
+            Cell.fromHex("b5ee9c7201010201005500015bd17354000000000000000000800a6b85bdc324aa200130107757710c7e867ac57419075aa8d6ab857dad5f35f9d8010043801cefb507b28f2b9a56974c3c476b608d5f6f2dae14958c625c4bcd7bc0f701aa70"),
+            "EQBTXC3uGSVRAAmAg7q7iGP0M9YroMg61Ua1XCvtavmvzniK",
+            "EQDnfag9lHlc0rS6YeI7WwRq-3ltcKSsYxLiXmveB7gNUzNO",
+        );
+    });
+
+    // // Seems like Ston.fi Test jetton is broken, so we skip this test for now
     // it('validate Ston.fi Test RED jetton discovery', async () => {
+    //     // TX https://testnet.tonviewer.com/transaction/cfe69a34c1da4995c41a4906fbc33a3e8ffd02e0b733743500e16da47cf8fcff
     //     validateJettonDiscovery(
     //         Cell.fromHex("b5ee9c7201010101003000005b2c76b9730000000000000000801ac51523aa9f8e8c0e5e19e6325dd3fbcf1b1c79e722aaf6e9290e0576d00e58d8"),
     //         Cell.fromHex("b5ee9c72010102010034000119d17354000000000000000000c0010043801ac51523aa9f8e8c0e5e19e6325dd3fbcf1b1c79e722aaf6e9290e0576d00e58d0"),
