@@ -6,6 +6,29 @@ import { JettonMaster } from './JettonMaster';
 import { JettonWallet } from './JettonWallet';
 import { EXIT_CODES, LOCK_INTERVAL, OP_CODES, ZERO_ADDRESS } from './constants';
 
+function validateJettonDiscovery(
+    provideJettonWalletCell: Cell,
+    takeJettonWalletCell: Cell,
+    wallet_address: string,
+    owner_address: string
+) {
+    const parsedProvideJettonWallet = loadProvideWalletAddress(provideJettonWalletCell.asSlice());
+    expect(parsedProvideJettonWallet.$$type).toEqual('ProvideWalletAddress');
+    expect(parsedProvideJettonWallet.query_id).toEqual(0n);
+    expect(parsedProvideJettonWallet.owner_address).toEqualAddress(Address.parse(owner_address));
+    expect(parsedProvideJettonWallet.include_address).toEqual(true);
+
+    const parsedTakeJettonWallet = loadTakeWalletAddress(takeJettonWalletCell.asSlice());
+    expect(parsedTakeJettonWallet.$$type).toEqual("TakeWalletAddress");
+    expect(parsedTakeJettonWallet.query_id).toEqual(0n);
+    expect(parsedTakeJettonWallet.wallet_address).toEqualAddress(Address.parse(wallet_address));
+    expect(parsedTakeJettonWallet.owner_address).toEqualSlice(
+        beginCell().storeMaybeRef(
+            beginCell().storeAddress(Address.parse(owner_address))
+        ).asSlice()
+    );
+}
+
 describe('Success lock behavior', () => {
     let blockchain: Blockchain;
     let deployer: SandboxContract<TreasuryContract>;
@@ -214,25 +237,33 @@ describe('Success lock behavior', () => {
         });
     });
 
-    it('validate minter.ton.org jetton discovery', async () => {
-        const provideJettonWalletCell = Cell.fromHex("b5ee9c7201010101003000005b2c76b973000000000000000080121b65243c0750380e7c2dd2cb85cd0d4e22bd80ca662b46528b5f177371f3c978");
-        const parsedProvideJettonWallet = loadProvideWalletAddress(provideJettonWalletCell.asSlice());
-        expect(parsedProvideJettonWallet.$$type).toEqual('ProvideWalletAddress');
-        expect(parsedProvideJettonWallet.query_id).toEqual(0n);
-        expect(parsedProvideJettonWallet.owner_address).toEqualAddress(Address.parse("kQCQ2ykh4DqBwHPhbpZcLmhqcRXsBlMxWjKUWvi7m4-eS2ZU"));
-        expect(parsedProvideJettonWallet.include_address).toEqual(true);
-
-        const takeJettonWalletCell = Cell.fromHex("b5ee9c7201010201005500015bd1735400000000000000000080185c00699fb594fd4f969e4bcf464866d2620c1b9f4830ad24a1fc7072a733067801004380121b65243c0750380e7c2dd2cb85cd0d4e22bd80ca662b46528b5f177371f3c970");
-        const parsedTakeJettonWallet = loadTakeWalletAddress(takeJettonWalletCell.asSlice());
-        expect(parsedTakeJettonWallet.$$type).toEqual("TakeWalletAddress");
-        expect(parsedTakeJettonWallet.query_id).toEqual(0n);
-        expect(parsedTakeJettonWallet.wallet_address).toEqualAddress(Address.parse("kQDC4ANM_ayn6ny08l56MkM2kxBg3PpBhWklD-ODlTmYM0wm"));
-        expect(parsedTakeJettonWallet.owner_address).toEqualSlice(
-            beginCell().storeMaybeRef(
-                beginCell().storeAddress(Address.parse("kQCQ2ykh4DqBwHPhbpZcLmhqcRXsBlMxWjKUWvi7m4-eS2ZU"))
-            ).asSlice()
+    it('validate minter.ton.org jetton discovery 1', async () => {
+        validateJettonDiscovery(
+            Cell.fromHex("b5ee9c7201010101003000005b2c76b973000000000000000080121b65243c0750380e7c2dd2cb85cd0d4e22bd80ca662b46528b5f177371f3c978"),
+            Cell.fromHex("b5ee9c7201010201005500015bd1735400000000000000000080185c00699fb594fd4f969e4bcf464866d2620c1b9f4830ad24a1fc7072a733067801004380121b65243c0750380e7c2dd2cb85cd0d4e22bd80ca662b46528b5f177371f3c970"),
+            "kQDC4ANM_ayn6ny08l56MkM2kxBg3PpBhWklD-ODlTmYM0wm",
+            "kQCQ2ykh4DqBwHPhbpZcLmhqcRXsBlMxWjKUWvi7m4-eS2ZU"
         );
     });
+
+    it('validate minter.ton.org jetton discovery 2', async () => {
+        validateJettonDiscovery(
+            Cell.fromHex("b5ee9c7201010101003000005b2c76b9730000000000000000800a00719576e4e04ed8f23109a9b4934f412ac824499d4a68155545c52b829baef8"),
+            Cell.fromHex("b5ee9c7201010201005500015bd17354000000000000000000801186322fb8fbb745ba91becc67e7f69831988f98a58f7c3755e4230714c011ebf8010043800a00719576e4e04ed8f23109a9b4934f412ac824499d4a68155545c52b829baef0"),
+            "kQCMMZF9x926LdSN9mM_P7TBjMR8xSx74bqvIRg4pgCPX2gy",
+            "kQBQA4yrtycCdseRiE1NpJp6CVZBIkzqU0Cqqi4pXBTdd56N"
+        );
+    });
+
+    // Seems like Ston.fi Test jetton is broken, so we skip this test for now
+    // it('validate Ston.fi Test RED jetton discovery', async () => {
+    //     validateJettonDiscovery(
+    //         Cell.fromHex("b5ee9c7201010101003000005b2c76b9730000000000000000801ac51523aa9f8e8c0e5e19e6325dd3fbcf1b1c79e722aaf6e9290e0576d00e58d8"),
+    //         Cell.fromHex("b5ee9c72010102010034000119d17354000000000000000000c0010043801ac51523aa9f8e8c0e5e19e6325dd3fbcf1b1c79e722aaf6e9290e0576d00e58d0"),
+    //         "kQClCMHCtiz1ejxrhiTIus4xYuNgiOPJ23E3KBY2xxyCBz76",
+    //         "kQDWKKkdVPx0YHLwzzGS7p_eeNjjzzkVV7dJSHArtoByxhQh"
+    //     );
+    // });
 });
 
 
