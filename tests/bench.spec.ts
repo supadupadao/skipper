@@ -1,5 +1,5 @@
 import '@ton/test-utils';
-import { Cell , beginCell, comment, toNano , Address } from '@ton/core';
+import { beginCell, comment, toNano } from '@ton/core';
 import { Blockchain, BlockchainTransaction, SandboxContract, TreasuryContract } from '@ton/sandbox';
 import { JettonLock } from '../wrappers/Lock';
 import { JettonMaster } from './JettonMaster';

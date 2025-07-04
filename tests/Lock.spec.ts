@@ -1,5 +1,5 @@
 import '@ton/test-utils';
-import { Address, beginCell, Cell, comment, toNano } from '@ton/core';
+import { beginCell, comment, toNano } from '@ton/core';
 import { Blockchain, SandboxContract, TreasuryContract  } from '@ton/sandbox';
 import { JettonLock } from '../wrappers/Lock';
 import { JettonMaster } from './JettonMaster';
@@ -453,27 +453,4 @@ describe('Error handling for lock', () => {
             exitCode: EXIT_CODES.UnlockDateNotArrived,
         });
     });
-
-    // it('validate ProvideWalletAddress', async () => {
-    //     const cell = Cell.fromHex("b5ee9c7201010101003000005b2c76b9730000000000000000801085878762ccef3ddb108d461053f4e00c374f46f863a429a83b049b38e262b458");
-
-    //     const parser = cell.beginParse();
-    //     expect(parser.loadUint(32)).toEqual(OP_CODES.ProvideWalletAddress);
-    //     expect(parser.loadUint(64)).toEqual(0); // query_id
-    //     expect(parser.loadAddress()).toEqualAddress(Address.parse("kQCELDw7Fmd57tiEajCCn6cAYbp6N8MdIU1B2CTZxxMVoumb"));
-    //     expect(parser.loadBit()).toEqual(true);
-    //     expect(parser.remainingBits).toEqual(0);
-    // });
-
-    // it('validate TakeWalletAddress', async () => {
-    //     const cell = Cell.fromHex("b5ee9c72010102010034000119d17354000000000000000000c0010043801085878762ccef3ddb108d461053f4e00c374f46f863a429a83b049b38e262b450");
-
-    //     const parser = cell.beginParse();
-    //     expect(parser.loadUint(32)).toEqual(OP_CODES.TakeWalletAddress);
-    //     expect(parser.loadUint(64)).toEqual(0); // query_id
-    //     expect(parser.remainingBits).toEqual(1);
-    //     expect(parser.loadExternalAddress()).toEqualAddress(Address.parse("kQCqxVdN-wUog-_Qs5KJwSrLiQDefYbda1EeK650FRDF7OCz"));
-    //     const owner = parser.loadRef().beginParse();
-    //     expect(owner.loadAddress()).toEqualAddress(Address.parse("kQCELDw7Fmd57tiEajCCn6cAYbp6N8MdIU1B2CTZxxMVoumb"));
-    // });
 });
