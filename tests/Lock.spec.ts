@@ -1,7 +1,7 @@
 import '@ton/test-utils';
 import { Address, beginCell, Cell, comment, toNano } from '@ton/core';
 import { Blockchain, SandboxContract, TreasuryContract  } from '@ton/sandbox';
-import { JettonLock } from '../wrappers/Lock';
+import { JettonLock, loadProvideWalletAddress, loadTakeWalletAddress } from '../wrappers/Lock';
 import { JettonMaster } from './JettonMaster';
 import { JettonWallet } from './JettonWallet';
 import { EXIT_CODES, LOCK_INTERVAL, OP_CODES, ZERO_ADDRESS } from './constants';
@@ -212,6 +212,26 @@ describe('Success lock behavior', () => {
             success: true,
             op: OP_CODES.JettonTransfer,
         });
+    });
+
+    it('validate minter.ton.org jetton discovery', async () => {
+        const provideJettonWalletCell = Cell.fromHex("b5ee9c7201010101003000005b2c76b973000000000000000080121b65243c0750380e7c2dd2cb85cd0d4e22bd80ca662b46528b5f177371f3c978");
+        const parsedProvideJettonWallet = loadProvideWalletAddress(provideJettonWalletCell.asSlice());
+        expect(parsedProvideJettonWallet.$$type).toEqual('ProvideWalletAddress');
+        expect(parsedProvideJettonWallet.query_id).toEqual(0n);
+        expect(parsedProvideJettonWallet.owner_address).toEqualAddress(Address.parse("kQCQ2ykh4DqBwHPhbpZcLmhqcRXsBlMxWjKUWvi7m4-eS2ZU"));
+        expect(parsedProvideJettonWallet.include_address).toEqual(true);
+
+        const takeJettonWalletCell = Cell.fromHex("b5ee9c7201010201005500015bd1735400000000000000000080185c00699fb594fd4f969e4bcf464866d2620c1b9f4830ad24a1fc7072a733067801004380121b65243c0750380e7c2dd2cb85cd0d4e22bd80ca662b46528b5f177371f3c970");
+        const parsedTakeJettonWallet = loadTakeWalletAddress(takeJettonWalletCell.asSlice());
+        expect(parsedTakeJettonWallet.$$type).toEqual("TakeWalletAddress");
+        expect(parsedTakeJettonWallet.query_id).toEqual(0n);
+        expect(parsedTakeJettonWallet.wallet_address).toEqualAddress(Address.parse("kQDC4ANM_ayn6ny08l56MkM2kxBg3PpBhWklD-ODlTmYM0wm"));
+        expect(parsedTakeJettonWallet.owner_address).toEqualSlice(
+            beginCell().storeMaybeRef(
+                beginCell().storeAddress(Address.parse("kQCQ2ykh4DqBwHPhbpZcLmhqcRXsBlMxWjKUWvi7m4-eS2ZU"))
+            ).asSlice()
+        );
     });
 });
 
@@ -452,23 +472,5 @@ describe('Error handling for lock', () => {
             op: OP_CODES.UnlockJettons,
             exitCode: EXIT_CODES.UnlockDateNotArrived,
         });
-    });
-
-    it('validate minter.ton.org jetton discovery', async () => {
-        const provideJettonWalletCell = Cell.fromHex("b5ee9c7201010101003000005b2c76b973000000000000000080121b65243c0750380e7c2dd2cb85cd0d4e22bd80ca662b46528b5f177371f3c978");
-        const provideJettonWalletParser = provideJettonWalletCell.beginParse();
-        expect(provideJettonWalletParser.loadUint(32)).toEqual(OP_CODES.ProvideWalletAddress);
-        expect(provideJettonWalletParser.loadUint(64)).toEqual(0); // query_id
-        expect(provideJettonWalletParser.loadAddress()).toEqualAddress(Address.parse("kQCQ2ykh4DqBwHPhbpZcLmhqcRXsBlMxWjKUWvi7m4-eS2ZU"));
-        expect(provideJettonWalletParser.loadBit()).toEqual(true);
-        expect(provideJettonWalletParser.remainingBits).toEqual(0);
-        
-        const takeJettonWalletCell = Cell.fromHex("b5ee9c7201010201005500015bd1735400000000000000000080185c00699fb594fd4f969e4bcf464866d2620c1b9f4830ad24a1fc7072a733067801004380121b65243c0750380e7c2dd2cb85cd0d4e22bd80ca662b46528b5f177371f3c970");
-        const takeJettonWalletParser = takeJettonWalletCell.beginParse();
-        expect(takeJettonWalletParser.loadUint(32)).toEqual(OP_CODES.TakeWalletAddress);
-        expect(takeJettonWalletParser.loadUint(64)).toEqual(0); // query_id
-        expect(takeJettonWalletParser.loadAddress()).toEqualAddress(Address.parse("kQDC4ANM_ayn6ny08l56MkM2kxBg3PpBhWklD-ODlTmYM0wm"));
-        const takeJettonWalletInner = takeJettonWalletParser.loadMaybeRef()?.beginParse();
-        expect(takeJettonWalletInner?.loadAddress()).toEqualAddress(Address.parse("kQCQ2ykh4DqBwHPhbpZcLmhqcRXsBlMxWjKUWvi7m4-eS2ZU"));
     });
 });
