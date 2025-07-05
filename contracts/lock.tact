@@ -50,7 +50,7 @@ contract JettonLock with Deployable {
 
     receive(msg: TakeWalletAddress){
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.jetton_master);
-        nativeThrowUnless(ERROR_CODE_INVALID_OWNER, myAddress() == msg.owner_address);
+        // nativeThrowUnless(ERROR_CODE_INVALID_OWNER, myAddress() == msg.owner_address);
         self.owner_jetton_wallet = msg.wallet_address;
 
         let cached = self.unverified_data.get(msg.wallet_address);
