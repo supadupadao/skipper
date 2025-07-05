@@ -2,8 +2,6 @@ import { Address, toNano } from '@ton/core';
 import { NetworkProvider } from '@ton/blueprint';
 import { Minter } from '../build/Skipper/tact_Minter';
 
-const JETTON_MASTER_ADDRESS = process.env.JETTON_MASTER_ADDRESS;
-
 export async function run(provider: NetworkProvider) {
     const minter = provider.open(await Minter.fromInit());
 
@@ -13,9 +11,10 @@ export async function run(provider: NetworkProvider) {
             value: toNano('0.05'),
         },
         {
-            $$type: 'DeploySkipper',
-            query_id: 0n,
-            jetton_master: Address.parse(JETTON_MASTER_ADDRESS!)
+            $$type: 'Deploy',
+            queryId: 0n,
         }
     );
+
+    await provider.waitForDeploy(minter.address);
 }

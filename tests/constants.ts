@@ -8,7 +8,10 @@ export const ZERO_ADDRESS = address("0:00000000000000000000000000000000000000000
 export const OP_CODES = {
     /* Standard jetton messages */
     JettonTransferNotification: 0x7362d09c, // Notification about transfer from jetton wallet to owner
+    JettonTransferInternal: 0x178d4519,     // Internal transfer from jetton wallet to owner
     JettonTransfer: 0x0f8a7ea5,             // New jetton transfer
+    ProvideWalletAddress: 0x2c76b973,       // Provide jetton wallet owner address
+    TakeWalletAddress: 0xd1735400,          // Send jetton wallet address to requester
     /* 01 - Lock messages */
     SendProxyMessage: 0x690101,             // Proxy message if sender is lock owner
     ProxyMessage: 0x690102,                 // Proxy message body
@@ -30,9 +33,9 @@ export const EXIT_CODES = {
     InvalidOwner: 132,
     NeedFee: 6901,
     UnlockDateNotArrived: 6902,
-    NoEnoughVotes: 6903, // TODO no tests
-    TooManyNoVotes: 6904, // TODO no tests
-    NotInitialized: 6905, // TODO no tests
+    NotEnoughVotes: 6903,
+    TooManyNoVotes: 6904,
+    NotInitialized: 6905,
     AlreadyInitialized: 6906,
     ProposalExpired: 6907,
     AlreadyExecuted: 6908,
@@ -40,5 +43,7 @@ export const EXIT_CODES = {
     UnlockDateInsufficient: 6910,
     InvalidLockPeriod: 6911, 
     LockPeriodTooShort: 6912,
-    InvalidAmount: 6913
+    InvalidAmount: 6913,
+    InsufficientStorageFees: 6914,
+    InvalidExparationTime: 6915
 };

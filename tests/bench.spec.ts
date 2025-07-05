@@ -7,6 +7,8 @@ import { JettonWallet } from './JettonWallet';
 import { Skipper } from '../wrappers/Skipper';
 import { LOCK_INTERVAL, OP_CODES } from './constants';
 import { Proposal } from '../wrappers/Proposal';
+import { Voter } from '../wrappers/Voter';
+import { getStateSizeForAccount } from '../utlis/gas';
 
 const ROUND_COINS = 1000000n;
 
@@ -24,15 +26,23 @@ function measureGas(transactions: BlockchainTransaction[]): bigint {
 }
 
 const GAS_CONSUMPTION_VALUES = {
-    DEPLOY_SKIPPER: toNano('0.039'),
-    DEPLOY_LOCK: toNano('0.022'),
-    MINT_JETTON: toNano('0.044'),
+    DEPLOY_SKIPPER: toNano('0.022'),
+    DEPLOY_LOCK: toNano('0.010'),
+    MINT_JETTON: toNano('0.048'),
     TRANSFER_JETTON: toNano('0.028'),
     UNLOCK_JETTON: toNano('0.028'),
-    NEW_PROPOSAL: toNano('0.034'),
-    VOTE_PROPOSAL: toNano('0.031'),
-    EXECUTE_PROPOSAL: toNano('0.005'),
+    NEW_PROPOSAL: toNano('0.017'),
+    VOTE_PROPOSAL: toNano('0.016'),
+    EXECUTE_PROPOSAL: toNano('0.004'),
 }
+
+const STATE_SIZE_VALUES = {
+    VOTER_BITS: 5190,
+    VOTER_CELLS: 10,
+    PROPOSAL_BITS: 12374,
+    PROPOSAL_CELLS: 23,
+};
+
 
 describe('Gas consumption benchmark', () => {
     let blockchain: Blockchain;
@@ -42,16 +52,19 @@ describe('Gas consumption benchmark', () => {
     let proposal: SandboxContract<Proposal>;
     let jetton_master: SandboxContract<JettonMaster>;
     let jetton_wallet: SandboxContract<JettonWallet>;
+    let voter: SandboxContract<Voter>;
 
     beforeAll(async () => {
         blockchain = await Blockchain.create();
 
         deployer = await blockchain.treasury('deployer');
-        jetton_master = blockchain.openContract(await JettonMaster.fromInit(deployer.address));
+        jetton_master = blockchain.openContract(await JettonMaster.fromInit(deployer.address, 0n));
         jetton_wallet = blockchain.openContract(await JettonWallet.fromInit(jetton_master.address, deployer.address));
         lock = blockchain.openContract(await JettonLock.fromInit(deployer.address, jetton_master.address));
         skipper = blockchain.openContract(await Skipper.fromInit(jetton_master.address));
         proposal = blockchain.openContract(await Proposal.fromInit(skipper.address, 1n));
+        voter = blockchain.openContract(await Voter.fromInit(skipper.address, proposal.address, deployer.address));
+
     });
 
     it('measure deploy', async () => {
@@ -231,5 +244,23 @@ describe('Gas consumption benchmark', () => {
         );
         expect(executeProposal.transactions).not.toHaveTransaction({ success: false });
         expect(measureGas(executeProposal.transactions)).toEqual(GAS_CONSUMPTION_VALUES.EXECUTE_PROPOSAL);
+    });   
+    
+    it('should match VOTER_BITS and VOTER_CELLS using both methods', async () => {    
+        const voterContract = blockchain.openContract(voter);
+        const onChain = await getStateSizeForAccount(blockchain, voterContract.address);
+        
+        expect(onChain.bits).toEqual(STATE_SIZE_VALUES.VOTER_BITS);
+        expect(onChain.cells).toEqual(STATE_SIZE_VALUES.VOTER_CELLS);
     });
+
+    it('should match PROPOSAL_BITS and PROPOSAL_CELLS using both methods', async () => {    
+        const proposalContract = blockchain.openContract(proposal);
+        const onChain = await getStateSizeForAccount(blockchain, proposalContract.address);
+        
+        expect(onChain.bits).toEqual(STATE_SIZE_VALUES.PROPOSAL_BITS);
+        expect(onChain.cells).toEqual(STATE_SIZE_VALUES.PROPOSAL_CELLS);
+    });
+    
+    
 });

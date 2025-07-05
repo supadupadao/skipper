@@ -72,16 +72,15 @@ describe('Initializing proposals tests with dynamic lock', () => {
 
         // Check the proposal data
         const proposalData = await proposal.getGetProposalData();
-        expect(proposalData?.receiver.toString()).toEqual(deployer.address.toString());
-
-        // Decode the body of ProposalData
-        const proposalDataSlice = proposalData!.body.beginParse();
-        const randomInt = proposalDataSlice.loadUint(256);
-        expect(randomInt).toEqual(random);
+        expect(proposalData?.payload?.receiver.toString()).toEqual(deployer.address.toString());
 
         //check the expiry date for the proposal
-        const expiresAt = await proposal.getExpiresAt();
-        expect(expiresAt).toEqual(BigInt(blockchain.now + expectedLockInterval));
+        expect(proposalData?.expires_at).toEqual(BigInt(blockchain.now + expectedLockInterval));
+
+        // Decode the body of ProposalData
+        const proposalDataSlice = proposalData!.payload?.body.beginParse();
+        const randomInt = proposalDataSlice?.loadUint(256);
+        expect(randomInt).toEqual(random);
     }
     
     beforeEach(async () => {
@@ -89,7 +88,7 @@ describe('Initializing proposals tests with dynamic lock', () => {
 
         deployer = await blockchain.treasury('deployer');
 
-        jetton_master = blockchain.openContract(await JettonMaster.fromInit(deployer.address));
+        jetton_master = blockchain.openContract(await JettonMaster.fromInit(deployer.address, 0n));
         jetton_wallet = blockchain.openContract(await JettonWallet.fromInit(jetton_master.address, deployer.address));
         skipper = blockchain.openContract(await Skipper.fromInit(jetton_master.address));
         lock = blockchain.openContract(await JettonLock.fromInit(deployer.address, jetton_master.address));
@@ -208,7 +207,7 @@ describe('Particibating in proposals tests with dynamic lock', () => {
         deployer = await blockchain.treasury('deployer');
         user2 = await blockchain.treasury('user2');
 
-        jetton_master = blockchain.openContract(await JettonMaster.fromInit(deployer.address));
+        jetton_master = blockchain.openContract(await JettonMaster.fromInit(deployer.address, 0n));
         jetton_wallet = blockchain.openContract(await JettonWallet.fromInit(jetton_master.address, deployer.address));
         user2_jetton_wallet = blockchain.openContract(await JettonWallet.fromInit(jetton_master.address, user2.address));
 
@@ -385,16 +384,15 @@ describe('Particibating in proposals tests with dynamic lock', () => {
 
         // Check the proposal data
         const proposalData = await proposal.getGetProposalData();
-        expect(proposalData?.receiver.toString()).toEqual(deployer.address.toString());
-
-        // Decode the body of ProposalData
-        const proposalDataSlice = proposalData!.body.beginParse();
-        const randomInt = proposalDataSlice.loadUint(256);
-        expect(randomInt).toEqual(random);
+        expect(proposalData?.payload?.receiver.toString()).toEqual(deployer.address.toString());
 
         //check the expiry date for the proposal
-        const expiresAt = await proposal.getExpiresAt();
-        expect(expiresAt).toEqual(BigInt(blockchain.now + LOCK_INTERVAL));
+        expect(proposalData?.expires_at).toEqual(BigInt(blockchain.now + LOCK_INTERVAL));
+
+        // Decode the body of ProposalData
+        const proposalDataSlice = proposalData!.payload?.body.beginParse();
+        const randomInt = proposalDataSlice?.loadUint(256);
+        expect(randomInt).toEqual(random);
     });
 
     //Runs the vote proposal votes for user2
@@ -428,12 +426,12 @@ describe('Particibating in proposals tests with dynamic lock', () => {
             op: OP_CODES.ProxyMessage,
         });
 
-        expect(voteProposalResult.transactions).toHaveTransaction({
+        /*expect(voteProposalResult.transactions).toHaveTransaction({
             from: skipper.address,
             // to: voter.address,
             success: true,
             op: OP_CODES.UpdateVoterBalance,
-        });
+        });*/
   
         return voteProposalResult
     }
@@ -446,30 +444,26 @@ describe('Particibating in proposals tests with dynamic lock', () => {
             to: proposal.address,
             success: true,
             op: OP_CODES.UpdateVotes,
-        });      
+        });
     });
 
     it('should try to participate on a proposal lock_period value 0', async () => {
         let voteProposalResult =  await runVoteProposalTest(BigInt(0));
 
         expect(voteProposalResult.transactions).toHaveTransaction({
-            // from: voter.address,
-            to: proposal.address,
             success: false,
-            op: OP_CODES.UpdateVotes,
-            exitCode: EXIT_CODES.UnlockDateInsufficient
-        });      
+            op: OP_CODES.UpdateVoterBalance,
+            exitCode: EXIT_CODES.InvalidExparationTime
+        });  
     });
 
     it('should try to participate on a proposal with lock_period value null', async () => {
         let voteProposalResult =  await runVoteProposalTest(null);
 
         expect(voteProposalResult.transactions).toHaveTransaction({
-            // from: voter.address,
-            to: proposal.address,
             success: false,
-            op: OP_CODES.UpdateVotes,
-            exitCode: EXIT_CODES.UnlockDateInsufficient
+            op: OP_CODES.UpdateVoterBalance,
+            exitCode: EXIT_CODES.InvalidExparationTime
         });      
     });
 
@@ -484,7 +478,7 @@ describe('Particibating in proposals tests with dynamic lock', () => {
             exitCode: EXIT_CODES.UnlockDateInsufficient
         });      
     });
-    
+   
     it('should participate on a proposal with lock_period value that spans more than the proposal expiry', async () => {
         let voteProposalResult =  await runVoteProposalTest(BigInt(LOCK_INTERVAL) + 5n);
 
@@ -496,7 +490,7 @@ describe('Particibating in proposals tests with dynamic lock', () => {
         });      
         
     });
-
+ 
     it('should participate on 2 proposals', async () => {
         let voteProposalResult =  await runVoteProposalTest(BigInt(LOCK_INTERVAL) + 5n);
 

@@ -2,13 +2,7 @@ import "@stdlib/deploy";
 import "./consts.tact";
 import "./errors.tact";
 import "./messages.tact";
-import "./proposal.tact";
 
-fun computeJettonWalletStateInit(master: Address, owner: Address): StateInit {
-    let data = beginCell().storeRef(JETTON_SYSTEM_CELL).storeUint(0, 1).storeAddress(master).storeAddress(owner
-    ).endCell();
-    return StateInit{code: JETTON_WALLET_CODE, data: data};
-}
 
 struct LockData {
     amount: Int as coins;
@@ -21,16 +15,50 @@ contract JettonLock with Deployable {
     unlock_date: Int as uint64 = 0;
     owner: Address;
     jetton_master: Address;
+
+    owner_jetton_wallet: Address? = null;
+    unverified_data: map<Address, Int> = emptyMap();
     init(owner: Address, jetton_master: Address){
         self.owner = owner;
         self.jetton_master = jetton_master;
     }
 
     receive(msg: JettonTransferNotification){
-        let jetton_wallet_init = computeJettonWalletStateInit(self.jetton_master, myAddress());
-        let jetton_wallet_address = contractAddress(jetton_wallet_init);
-        nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == jetton_wallet_address);
-        self.amount += msg.amount;
+        if self.owner_jetton_wallet == null {
+            let cached = self.unverified_data.get(sender());
+            if (cached != null) {
+                self.unverified_data.set(sender(), msg.amount + cached!!);
+            } else {
+                self.unverified_data.set(sender(), msg.amount);
+            }
+
+            send(SendParameters {
+                to: self.jetton_master,
+                value: 0,
+                mode: SendRemainingValue,
+                body: ProvideWalletAddress {
+                    query_id: msg.query_id,
+                    owner_address: myAddress(),
+                    include_address: true
+                }.toCell()
+            });
+        } else {
+            nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.owner_jetton_wallet);
+            self.amount += msg.amount;
+        }
+    }
+
+    receive(msg: TakeWalletAddress){
+        nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.jetton_master);
+        // nativeThrowUnless(ERROR_CODE_INVALID_OWNER, myAddress() == msg.owner_address);
+        self.owner_jetton_wallet = msg.wallet_address;
+
+        let cached = self.unverified_data.get(msg.wallet_address);
+        if (cached != null) {
+            self.amount += cached!!;
+        }
+
+        self.unverified_data = emptyMap();
     }
 
     receive(msg: LockJettons) {
@@ -89,9 +117,9 @@ contract JettonLock with Deployable {
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.owner);
         nativeThrowUnless(ERROR_CODE_NEED_FEE, ctx.value >= MIN_LOCK_FEE);
         nativeThrowUnless(ERROR_UNLOCK_DATE_NOT_ARRIVED, now() > self.unlock_date);
-        let jetton_wallet_init = computeJettonWalletStateInit(self.jetton_master, myAddress());
+
         send(SendParameters{
-                to: contractAddress(jetton_wallet_init),
+                to: self.owner_jetton_wallet!!,
                 value: 0,
                 mode: SendRemainingBalance,
                 bounce: true,

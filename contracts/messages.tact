@@ -14,10 +14,41 @@ message(0x0f8a7ea5) JettonTransfer {
     forward_ton_amount: Int as coins;
     forward_payload: Slice as remaining;
 }
+message(0x2c76b973) ProvideWalletAddress {
+    query_id: Int as uint64;
+    owner_address: Address;
+    include_address: Bool;
+}
+message(0xd1735400) TakeWalletAddress {
+    query_id: Int as uint64;
+    wallet_address: Address;
+    owner_address: Slice as remaining;
+}
 /* Common structs */
-struct ProposalData {
+struct ProposalPayload {
     receiver: Address;
     body: Cell;
+}
+struct ProposalData {
+    proposal_id: Int as uint64;
+    is_initialized: Bool;
+    is_executed: Bool;
+    votes_yes: Int as coins;
+    votes_no: Int as coins;
+    expires_at: Int as uint64;
+    payload: ProposalPayload?;
+}
+struct VoterData {
+    proposal: Address;
+    owner: Address;
+    is_initialized: Bool;
+    amount: Int as coins;
+    expires_at: Int as uint64;
+}
+/* 00 - Minter messages */
+message(0x690001) DeploySkipper {
+    query_id: Int as uint64;
+    jetton_master: Address;
 }
 /* 01 - Lock messages */
 message(0x690101) SendProxyMessage {
@@ -41,7 +72,7 @@ message(0x690104) LockJettons {
 message(0x690201) InitProposal {
     initiator: Address;
     amount: Int as coins;
-    data: ProposalData;
+    payload: ProposalPayload;
     lock_period: Int? as uint64;
 }
 message(0x690202) UpdateVotes {
@@ -55,6 +86,7 @@ message(0x690203) ExecuteProposal {
 /* 03 - Voter */
 message(0x690301) InitVoter {
     amount: Int as coins;
+    expires_at: Int as uint64;
 }
 message(0x690302) UpdateVoterBalance {
     amount: Int as coins;
@@ -63,7 +95,7 @@ message(0x690302) UpdateVoterBalance {
 }
 /* 04 - Skipper */
 message(0x690401) RequestNewProposal {
-    data: ProposalData;
+    payload: ProposalPayload;
 }
 message(0x690402) VoteForProposal {
     proposal_id: Int as uint64;

@@ -1,7 +1,26 @@
 import "@stdlib/deploy";
-import "./consts.tact";
 import "./lock.tact";
 import "./proposal.tact";
+import "./messages";
+
+contract Minter with Deployable {
+    receive(msg: DeploySkipper) {
+        let skipper_init = initOf Skipper(msg.jetton_master);
+        send(SendParameters {
+            to: contractAddress(skipper_init),
+            code: skipper_init.code,
+            data: skipper_init.data,
+            value: 0,
+            mode: SendRemainingValue,
+            body: Deploy {
+                queryId: msg.query_id,
+            }.toCell(),
+        });
+    }
+
+    receive(_msg: Slice) {}
+}
+
 struct SkipperData {
     last_proposal_id: Int as uint64;
 }
@@ -33,7 +52,7 @@ contract Skipper with Deployable {
                     body: InitProposal{
                         initiator: msg.owner,
                         amount: msg.amount,
-                        data: payload.data,
+                        payload: payload.payload,
                         lock_period: msg.lock_period // period to lock the contract (for init only)
                     }.toCell()
                 }
@@ -70,6 +89,10 @@ contract Skipper with Deployable {
     get fun get_lock_address(owner: Address): Address {
         let init = initOf JettonLock(owner, self.jetton_master);
         return contractAddress(init);
+    }
+
+    get fun get_jetton_master(): Address {
+        return self.jetton_master;
     }
     
     get fun get_proposal_address(proposal_id: Int): Address {
