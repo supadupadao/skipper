@@ -49,13 +49,11 @@ contract Proposal {
                 self.expires_at - now())
         );
         
-        send(SendParameters{ // TODO update value
-                to: contractAddress(voter_init),
+        deploy(DeployParameters{ // TODO update value
                 value: 0,
                 mode: SendRemainingValue,
                 bounce: true,
-                code: voter_init.code,
-                data: voter_init.data,
+                init: voter_init,
                 body: InitVoter{
                     amount: msg.amount,
                     expires_at: self.expires_at
@@ -91,7 +89,7 @@ contract Proposal {
         nativeThrowUnless(ERROR_NOT_INITIALIZED, self.payload != null);
 
         self.is_executed = true;
-        send(SendParameters{
+        message(MessageParameters {
                 to: self.payload!!.receiver,
                 value: 0,
                 bounce: false,
@@ -173,7 +171,7 @@ contract Voter {
         self.amount = msg.amount;
         
 
-        send(SendParameters{
+        message(MessageParameters{
             to: self.proposal,
             value: 0,
             mode: SendRemainingValue,

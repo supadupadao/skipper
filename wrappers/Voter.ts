@@ -1,1 +1,1 @@
-export * from '../build/Skipper/tact_Voter';
+export * from '../build/Skipper/Skipper_Voter';

@@ -4,12 +4,15 @@
     "scripts": {
         "start": "blueprint run",
         "build": "blueprint build --all",
-        "test": "jest --verbose"
+        "test": "jest --verbose",
+        "lint": "blueprint misti . -A --output-path ./build/Skipper/"
     },
     "devDependencies": {
-        "@tact-lang/compiler": "1.6.13",
         "@commitlint/cli": "19.5.0",
         "@commitlint/config-conventional": "19.5.0",
+        "@nowarp/blueprint-misti": "0.9.0",
+        "@nowarp/misti": "0.9.0",
+        "@tact-lang/compiler": "1.6.13",
         "@ton/blueprint": "0.37.0",
         "@ton/core": "0.61.0",
         "@ton/crypto": "3.3.0",
