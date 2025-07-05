@@ -1,15 +1,16 @@
 import "@stdlib/deploy";
+import "./errors.tact";
 import "./lock.tact";
 import "./proposal.tact";
 import "./messages";
+import "./consts.tact";
+import "./utils/storage.tact";
 
 contract Minter with Deployable {
     receive(msg: DeploySkipper) {
         let skipper_init = initOf Skipper(msg.jetton_master);
-        send(SendParameters {
-            to: contractAddress(skipper_init),
-            code: skipper_init.code,
-            data: skipper_init.data,
+        deploy(DeployParameters {
+            init: skipper_init,
             value: 0,
             mode: SendRemainingValue,
             body: Deploy {
@@ -42,13 +43,11 @@ contract Skipper with Deployable {
             let payload = RequestNewProposal.fromCell(msg.payload);
             self.last_proposal_id += 1;
             let new_proposal_init = initOf Proposal(myAddress(), self.last_proposal_id);
-            send(SendParameters{
-                    to: contractAddress(new_proposal_init),
+            deploy(DeployParameters{
                     value: 0,
                     mode: SendRemainingValue,
                     bounce: false,
-                    code: new_proposal_init.code,
-                    data: new_proposal_init.data,
+                    init: new_proposal_init,
                     body: InitProposal{
                         initiator: msg.owner,
                         amount: msg.amount,
@@ -63,12 +62,10 @@ contract Skipper with Deployable {
             let payload = VoteForProposal.fromCell(msg.payload);
             let proposal_init = initOf Proposal(myAddress(), payload.proposal_id);
             let voter_init = initOf Voter(myAddress(), contractAddress(proposal_init), msg.owner);            
-            send(SendParameters{
-                    to: contractAddress(voter_init),
+            deploy(DeployParameters{
                     value: 0,
                     mode: SendRemainingValue,
-                    code: voter_init.code,
-                    data: voter_init.data,
+                    init: voter_init,
                     bounce: false,
                     body: UpdateVoterBalance{
                         amount: msg.amount,

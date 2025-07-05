@@ -32,7 +32,7 @@ contract JettonLock with Deployable {
                 self.unverified_data.set(sender(), msg.amount);
             }
 
-            send(SendParameters {
+            message(MessageParameters {
                 to: self.jetton_master,
                 value: 0,
                 mode: SendRemainingValue,
@@ -97,7 +97,7 @@ contract JettonLock with Deployable {
             }            
         }
 
-        send(SendParameters{
+        message(MessageParameters{
                 to: msg.to,
                 value: 0,
                 mode: SendRemainingValue,
@@ -118,7 +118,7 @@ contract JettonLock with Deployable {
         nativeThrowUnless(ERROR_CODE_NEED_FEE, ctx.value >= MIN_LOCK_FEE);
         nativeThrowUnless(ERROR_UNLOCK_DATE_NOT_ARRIVED, now() > self.unlock_date);
 
-        send(SendParameters{
+        message(MessageParameters{
                 to: self.owner_jetton_wallet!!,
                 value: 0,
                 mode: SendRemainingBalance,
