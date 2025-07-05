@@ -1,1 +1,1 @@
-export * from '../build/Skipper/tact_Proposal';
+export * from '../build/Skipper/Skipper_Proposal';

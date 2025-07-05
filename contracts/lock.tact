@@ -58,7 +58,9 @@ contract JettonLock with Deployable {
             self.amount += cached!!;
         }
 
-        self.unverified_data = emptyMap();
+        foreach (key, _ in self.unverified_data) {
+            self.unverified_data.del(key);
+        }
     }
 
     receive(msg: LockJettons) {

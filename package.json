@@ -4,7 +4,8 @@
     "scripts": {
         "start": "blueprint run",
         "build": "blueprint build --all",
-        "test": "jest --verbose"
+        "test": "jest --verbose",
+        "lint": "blueprint misti . -A --output-path ./build/Skipper/"
     },
     "devDependencies": {
         "@commitlint/cli": "19.5.0",
