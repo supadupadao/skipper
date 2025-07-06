@@ -47,7 +47,7 @@ Requires Node.js **v22+**.
 
 ## 🧪 Scripts
 
-See [`DEPLOY.md`](DEPLOY.md) for full CLI deployment guide.
+See [`DEPLOY.md`](docs/DEPLOY.md) for full CLI deployment guide.
 
 Useful scripts:
 
