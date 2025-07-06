@@ -1,4 +1,4 @@
-# 🚀 Deployment Guide
+# Deployment Guide
 
 This guide describes how to deploy and interact with the Skipper smart contracts using Blueprint scripts.
 
