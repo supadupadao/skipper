@@ -26,21 +26,21 @@ function measureGas(transactions: BlockchainTransaction[]): bigint {
 }
 
 const GAS_CONSUMPTION_VALUES = {
-    DEPLOY_SKIPPER: toNano('0.022'),
+    DEPLOY_SKIPPER: toNano('0.021'),
     DEPLOY_LOCK: toNano('0.010'),
     MINT_JETTON: toNano('0.048'),
     TRANSFER_JETTON: toNano('0.028'),
     UNLOCK_JETTON: toNano('0.028'),
-    NEW_PROPOSAL: toNano('0.017'),
-    VOTE_PROPOSAL: toNano('0.016'),
+    NEW_PROPOSAL: toNano('0.016'),
+    VOTE_PROPOSAL: toNano('0.015'),
     EXECUTE_PROPOSAL: toNano('0.004'),
 }
 
 const STATE_SIZE_VALUES = {
-    VOTER_BITS: 5190,
+    VOTER_BITS: 4966,
     VOTER_CELLS: 10,
-    PROPOSAL_BITS: 12374,
-    PROPOSAL_CELLS: 23,
+    PROPOSAL_BITS: 10758,
+    PROPOSAL_CELLS: 21,
 };
 
 
