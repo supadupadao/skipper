@@ -85,6 +85,9 @@ contract Skipper with Deployable {
             value: 0,
             mode: SendRemainingValue,
             bounce: true,
+            body: Deploy {
+                queryId: msg.query_id,
+            }.toCell(),
         });
     }
 

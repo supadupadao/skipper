@@ -102,5 +102,6 @@ message(0x690402) VoteForProposal {
     vote: Int as uint1; // true = 1 | false = 0
 }
 message(0x690403) DeployLock {
+    query_id: Int as uint64;
     owner: Address;
 }

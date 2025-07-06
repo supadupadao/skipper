@@ -12,6 +12,9 @@ export const OP_CODES = {
     JettonTransfer: 0x0f8a7ea5,             // New jetton transfer
     ProvideWalletAddress: 0x2c76b973,       // Provide jetton wallet owner address
     TakeWalletAddress: 0xd1735400,          // Send jetton wallet address to requester
+    /* Common messages */
+    Deploy: 0x946a98b6,                     // Deploy contract
+    DeployOk: 0xaff90f57,                   // Deployment successful
     /* 01 - Lock messages */
     SendProxyMessage: 0x690101,             // Proxy message if sender is lock owner
     ProxyMessage: 0x690102,                 // Proxy message body
@@ -27,6 +30,7 @@ export const OP_CODES = {
     /* 04 - Skipper */
     RequestNewProposal: 0x690401,           // Create new proposal
     VoteForProposal: 0x690402,              // Vote for proposal
+    DeployLock: 0x690403,                   // Deploy new lock contract
 };
 
 export const EXIT_CODES = {

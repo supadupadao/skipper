@@ -136,6 +136,41 @@ describe('Integration tests', () => {
         expect(lockData.amount).toEqual(toNano('200000'));
     });
 
+    it('should deploy Lock contract', async () => {
+        const deployer2 = await blockchain.treasury('deployer2');
+        const deployer2Lock = await JettonLock.fromInit(deployer2.address, jetton_master.address);
+        
+        const deployResult = await skipper.send(
+            deployer.getSender(),
+            {
+                value: toNano('0.05'),
+            },
+            {
+                $$type: 'DeployLock',
+                query_id: 0n,
+                owner: deployer2.address,
+            }
+        );
+        expect(deployResult.transactions).toHaveTransaction({
+            from: deployer.address,
+            to: skipper.address,
+            success: true,
+            op: OP_CODES.DeployLock,
+        });
+        expect(deployResult.transactions).toHaveTransaction({
+            from: skipper.address,
+            to: deployer2Lock.address,
+            success: true,
+            deploy: true,
+            op: OP_CODES.Deploy,
+        });
+        expect(deployResult.transactions).toHaveTransaction({
+            from: deployer2Lock.address,
+            to: skipper.address,
+            op: OP_CODES.DeployOk,
+        });
+    });
+
     
     it('should create proposal', async () => {
         const createProposalResult = await lock.send(
