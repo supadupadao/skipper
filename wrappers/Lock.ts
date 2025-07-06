@@ -1,1 +1,1 @@
-export * from '../build/Skipper/tact_JettonLock';
+export * from '../build/Skipper/Skipper_JettonLock';
