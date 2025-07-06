@@ -82,6 +82,15 @@ contract Skipper with Deployable {
         nativeThrow(ERROR_PROXY_OPCODE_NOT_FOUND);
     }
 
+    receive(msg: DeployLock) {
+        deploy(DeployParameters {
+            init: initOf JettonLock(msg.owner, self.jetton_master),
+            value: 0,
+            mode: SendRemainingValue,
+            bounce: true,
+        });
+    }
+
     get fun get_skipper_data(): SkipperData {
         return SkipperData{last_proposal_id: self.last_proposal_id};
     }
