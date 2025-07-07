@@ -1,54 +1,63 @@
-# Skipper application architecture
+# Skipper Application Architecture
 
-Below is architecture of Skipper smart contracts. This document cold be useful for people who want to understand how decision making process is work:
+This document describes the architecture of the Skipper smart contract system. It is useful for:
 
--   Contributors who want improve protocol
--   Developers who build applications on top of Skipper
+* Contributors who want to improve the protocol
+* Developers building apps on top of Skipper
 
-## Entities
+## 🧱 Entities
 
 ### Participant
 
-**Participant** is any ton address (for example TON wallet) who owns DAO governance token
+Any TON address (e.g. a wallet) that owns governance jettons.
 
-### Governance token
+### Governance Token
 
-Specific TON jetton, that was chosen to be **governance token**. It can be any smart contract implementing the following standards:
+A specific Jetton used for governance. Must implement the following standards:
 
--   [TEP-64](https://github.com/ton-blockchain/TEPs/blob/master/text/0064-token-data-standard.md) - Token Data Standard
--   [TEP-74](https://github.com/ton-blockchain/TEPs/blob/master/text/0074-jettons-standard.md) - Fungible tokens (Jettons) standard
--   [TEP-89](https://github.com/ton-blockchain/TEPs/blob/master/text/0089-jetton-wallet-discovery.md) - Discoverable Jettons Wallets
+* [TEP-64](https://github.com/ton-blockchain/TEPs/blob/master/text/0064-token-data-standard.md)
+* [TEP-74](https://github.com/ton-blockchain/TEPs/blob/master/text/0074-jettons-standard.md)
+* [TEP-89](https://github.com/ton-blockchain/TEPs/blob/master/text/0089-jetton-wallet-discovery.md)
 
-[See SupaDupaDAO jetton implementation](https://github.com/supadupadao/jetton)
+### Jetton Lock
 
-### Jetton lock
+A smart contract that holds locked governance jettons. Required to:
 
-Smart contract that receives governance tokens and lock it for a while to avoid multiple voting.
+* Prevent double voting
+* Track the amount locked per participant
 
-Read more about how Skipper [count votes](#vote-for-existing-proposal) and why jettons do not [double counted](#lock-tokens)
+See ["Vote for existing proposal"](#vote-for-existing-proposal) and ["Lock tokens"](#lock-tokens) for rationale.
 
-### DAO
+### DAO (`Skipper`)
 
-Root DAO smart contract. It deploys in single instance. It also do many following things:
+The root contract that:
 
--   Receives participant messages and creates proposals or sends votes to them
--   It is kind of DAO treasury. If Skipper used to manage application, governed application should use this contract as owner
+* Receives messages from participants
+* Deploys proposals
+* Acts as the treasury and central governance entrypoint
 
 ### Proposal
 
-Smart contract that stores in itself proposed action (e.g. toncoin transfer or contract call) and voting results. It deploys isolated on each proposal. So every proposal has it own address, deployed smart contract instance and storage.
+A smart contract that contains:
+
+* A specific action (e.g. transfer TON, call contract)
+* Voting results
+  Each proposal is deployed as a standalone contract.
 
 ### Voter
 
-Smart contract that stores in itself information about single participant vote. It deploys on each proposal and on each participant in it.
+A per-participant, per-proposal contract that:
 
-## Workflow
+* Stores how many tokens the participant has used to vote
+* Allows proper vote updates when lock amount changes
 
-### Lock tokens
+---
 
-To avoid multiple voting Skipper obliges participants to lock their governance tokens. If it doesn't do this, it impossible find out is participant has voted or not, so it could send multiple votes.
+## 🔄 Workflow
 
-So participant lock it tokens in special smart contract as displayed below:
+### Lock Tokens
+
+To vote, participants must lock jettons in a `Jetton Lock` contract. This prevents double voting.
 
 ```mermaid
 sequenceDiagram
@@ -57,20 +66,14 @@ sequenceDiagram
 
   create participant lock as Jetton lock
   wallet ->> lock: Deploy
-  wallet ->> jetton: 0x0f8a7ea5<br/>(JettonTransfer)
-  activate jetton
-  Note over jetton: Send tokens to lock address
-  Note over jetton: Notify lock about transfer
-  jetton ->> lock: 0x7362d09c<br/>(JettonTransferNotification)
-  deactivate jetton
-  activate lock
-  Note over lock: Save transfered amount
-  deactivate lock
+  wallet ->> jetton: JettonTransfer
+  jetton ->> lock: JettonTransferNotification
+  Note over lock: Save transferred amount
 ```
 
-What's actually happening there is this: DAO participant transfer its jettons to jetton lock wallet and jetton lock receive Transfer Notification message that means that now tokens are belongs to lock contract.
+### Why Proxy?
 
-There are issue to find out inside other contracts how many tokens participant locked. Other contracts can't simple ask lock about it, because it overcomplicate on-chain logic and therefore increase gas consumption. It was decided to use Jetton Lock contract as proxy that send amount of locked tokens and send some additional info that help to check is this lock is really belong to specific participant by generating contract address.
+Other contracts can't directly query a lock's state. Instead, the lock sends the amount and metadata to the DAO.
 
 ```mermaid
 flowchart TD
@@ -82,13 +85,11 @@ flowchart TD
   participant --❌<br/>DAO doesn't know how many tokens is locked--> dao
 ```
 
-### Create new proposal
+---
 
-As above was described: jetton lock is proxy contract. So every interaction with DAO that related with proposals goes through Jetton Lock.
+### Create a Proposal
 
-When DAO receives proxy message it deploys Proposal contract which deploys Voter contract. In that exact order.
-
-Lock notifies about amount of tokens locked so all contracts following it in the chain know it amount. Proposal saves it value to "for" votes. Voter saves it to know in future how many tokens are already used in voting.
+All proposal-related messages go through the lock (proxy pattern).
 
 ```mermaid
 sequenceDiagram
@@ -96,42 +97,20 @@ sequenceDiagram
   participant lock as Jetton lock
   participant dao as DAO
 
-  wallet ->> lock: 0x690101<br/>(SendProxyMessage)<br/>with body<br/>0x690401<br/>(RequestNewProposal)
-  activate lock
-  Note over lock: Pass proxied body to DAO
-  lock ->> dao: 0x690102<br/>(ProxyMessage)<br/>with body<br/>0x690401<br/>(RequestNewProposal)
-  deactivate lock
-  activate dao
-  Note over dao: Deploy proposal contract with next proposal_id
-  create participant proposal as Proposal
-  dao ->> proposal: 0x690201<br/>(InitProposal)
-  deactivate dao
-  activate proposal
-  Note over proposal: Deploy voter contract with user address
-  create participant voter as Voter
-  proposal ->> voter: 0x690301<br/>(InitVoter)
-  deactivate proposal
-  activate voter
-  Note over voter: Save voted amount of tokens
-  deactivate voter
+  wallet ->> lock: SendProxyMessage (RequestNewProposal)
+  lock ->> dao: ProxyMessage (RequestNewProposal)
+  dao ->> proposal: InitProposal
+  proposal ->> voter: InitVoter
 ```
 
-### Vote for existing proposal
+---
 
-This operation has same flow as above. But it has big differences:
+### Vote for Existing Proposal
 
--   Different proxy body
--   Different order of message chain.
+Voting flow differs from proposal creation:
 
-    In previous case message goes in following order: Lock -> DAO -> **Proposal -> Voter**.
-
-    In that case message goes in following order: Lock -> DAO -> **Voter -> Proposal**.
-
-    That's because Proposal have to increase votes count but it can't do it without previous vote value from this participant: Lock stores only locked amount of tokens and know nothing about votes, Proposal stores only amount of "for" and "against" votes and know nothing how many specific user's vote. This know Voter contract.
-
-    Because if participant lock 100 tokens, send vote with this amount, lock 100 tokens more, and send vote with new amount, Proposal should save 100 votes in first case and 100 votes more in second case. Not 100 votes in first case and 200 votes in second case
-
-    **Voter -> Proposal** way fixes this. In example above Voter will store 100 tokens and in second message it check that 100 tokens are already stored and will deduct it from second message amount
+* Order: Lock -> DAO -> **Voter -> Proposal**
+* Rationale: only `Voter` knows how much has been used previously. It computes the difference.
 
 ```mermaid
 sequenceDiagram
@@ -141,78 +120,38 @@ sequenceDiagram
   participant voter as Voter
   participant proposal as Proposal
 
-  wallet ->> lock: 0x690101<br/>(SendProxyMessage)<br/>with body<br/>0x690402<br/>(VoteForProposal)
-  activate lock
-  Note over lock: Pass proxied body to DAO
-  lock ->> dao: 0x690102<br/>(ProxyMessage)<br/>with body<br/>0x690402<br/>(VoteForProposal)
-  deactivate lock
-  activate dao
-  Note over dao: Send actual votes amount to proposal's voter
-  dao ->> voter: 0x690302<br/>(UpdateVoterBalance)
-  deactivate dao
-  activate voter
-  Note over voter: Compute new tokens amount as (new - previous)
-  Note over voter: Send new value to proposal
-  voter ->> proposal: 0x690202<br/>(UpdateVotes)
-  activate proposal
-  deactivate voter
-  Note over proposal: Update votes amount
-  deactivate proposal
+  wallet ->> lock: SendProxyMessage (VoteForProposal)
+  lock ->> dao: ProxyMessage (VoteForProposal)
+  dao ->> voter: UpdateVoterBalance
+  voter ->> proposal: UpdateVotes
 ```
 
-## Exit codes
+---
 
-[Standard Tact exit codes](https://docs.tact-lang.org/book/exit-codes)
+## 🚨 Exit Codes
 
-Skipper uses custom exit codes for identifying non standard errors. It always 4 digit decimal code with following structure: `69XX` where 69 is prefix for every error and XX is unique number for each error.
+Skipper uses:
 
-<table>
-    <tr>
-        <th>Code</th>
-        <th>Description</th>
-    </tr>
-    <tr><td colspan=2>Tact lang exit codes:</td></tr>
-    <tr>
-        <td>132</td>
-        <td>
-            Invalid owner of contract.</br><i>Occurs when contract receives message not from owner address.</i>
-        </td>
-    </tr>
-    <tr><td colspan=2>Custom exit codes:</td></tr>
-    <tr>
-        <td>6901</td>
-        <td>No enoght TON in message.</td>
-    </tr>
-    <tr>
-        <td>6902</td>
-        <td>Unlock date is not arrived.</br><i>Occurs on trying to unlock jettons before unlock date.</i></td>
-    </tr>
-    <tr>
-        <td>6903</td>
-        <td>No enough votes.</br><i>Occurs when trying to execute proposal that has no enough votes.</i></td>
-    </tr>
-    <tr>
-        <td>6904</td>
-        <td>Too many "no" votes.</br><i>Occurs when trying to execute proposal that has too many "no" votes.</i></td>
-    </tr>
-    <tr>
-        <td>6905</td>
-        <td>Not initialized.</br><i>Occurs when trying to interact with contract that has not been initialized.</i></td>
-    </tr>
-    <tr>
-        <td>6906</td>
-        <td>Already initialized.</br><i>Occurs when trying to initialize contract that has been already initialized (to avoid double initialization).</i></td>
-    </tr>
-    <tr>
-        <td>6907</td>
-        <td>Proposal expired.</br><i>Occurs when trying to vote in expired proposal.</i></td>
-    </tr>
-    <tr>
-        <td>6908</td>
-        <td>Proposal executed.</br><i>Occurs when trying to vote in executed proposal.</i></td>
-    </tr>
-    <tr>
-        <td>6909</td>
-        <td>Proxy opcode not found.</br><i>Occurs when trying to send unknown proxy body to Skipper contract.</i></td>
-    </tr>
-</table>
+* [Tact Standard Exit Codes](https://docs.tact-lang.org/book/exit-codes)
+* Custom `69XX`-series codes
+
+| Code | Description                                                      |
+| ---- | ---------------------------------------------------------------- |
+| 132  | Invalid owner (Tact standard)                                    |
+| 6901 | Not enough TON in message                                        |
+| 6902 | Unlock date hasn't arrived                                       |
+| 6903 | Not enough YES votes to execute proposal                         |
+| 6904 | Too many NO votes for proposal                                   |
+| 6905 | Contract is not initialized                                      |
+| 6906 | Contract already initialized                                     |
+| 6907 | Proposal expired                                                 |
+| 6908 | Proposal already executed                                        |
+| 6909 | Proxy opcode not found                                           |
+| 6910 | Unlock date is insufficient to cover proposal expiration date    |
+| 6911 | Lock period must be greater than zero                            |
+| 6912 | Lock period is too short and does not extend current unlock date |
+| 6913 | Amount provided must be greater than zero                        |
+| 6914 | Insufficient storage fee for the contract                        |
+| 6915 | Invalid expiration time for proposal or voter                    |
+| 6916 | Invalid owner address for jetton wallet                          |
+

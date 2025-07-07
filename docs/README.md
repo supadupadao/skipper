@@ -1,85 +1,110 @@
-# Skipper docs
+# Skipper – DAO Smart Contracts on TON
 
-This documentation describes Skipper project.
-Skipper is Decentralized Autonomous Organization (DAO) protocol working on TON blockchain and smart contracts written in Tact lang.
+**Skipper** is a modular smart contract framework for building Decentralized Autonomous Organizations (DAOs) on the **TON blockchain**, written in [Tact](https://tact-lang.org).
 
-## How it works?
+It allows communities to manage treasury, vote on proposals, and coordinate governance decisions using **jetton-based voting power**.
 
-Decentralized Autonomous Organization (DAO) is managed via making participant-based decisions. Participants is holders of specific jetton, that acts as vote power. Decisions making is controlled by smart contracts in which described rules of DAO workflow.
+---
 
-```mermaid
-graph
-   participant1[🙋‍♂️<br/>DAO participant]
-   participant2[🙋‍♀️<br/>DAO participant]
-   participant3[🙋<br/>DAO participant]
+## 🚀 Overview
 
-   subgraph TON Blockchain
-   skipper[📄<br/>DAO smart contracts]
-   decision[✅<br/>DAO decision]
-   end
+Skipper enables onchain DAO governance with the following flow:
 
-   participant1 --vote<br/>✅--> skipper
-   participant2 --vote<br/>✅--> skipper
-   participant3 --vote<br/>✅--> skipper
+1. **Jetton holders** lock their tokens to participate in governance.
+2. Participants **create proposals** (e.g. transfer funds, whitelist address).
+3. Other token holders **vote FOR or AGAINST** the proposal.
+4. If the proposal meets the required quorum and support threshold, it is executed onchain.
 
-   skipper --> decision
-```
+> 🧠 Voting power is proportional to the amount of jettons locked by the participant.
 
--   To become DAO participant it need to have specific for this DAO jetton.
--   Vote power is depend of amount of jetton participant have.
+---
 
-## Proposal lifecycle
+## 🔁 Governance Lifecycle
 
-> [!NOTE]
-> Proposal entity in Skipper terminology is action that proposed by participant, that will be performed by DAO.
->
-> E.g. participant propose transfer toncoins from DAO treasury to some other address. If all participants agree, it will be performed
+### 1. Create Proposal
 
-### 1. New proposal
-
-Participant create new proposal and thus initiates voting for it
+Any participant can initiate a proposal.
 
 ```mermaid
 flowchart LR
-   proposal_author[🙋‍♂️<br/>DAO participant]
-
+   author[🙋‍♂️<br/>DAO participant]
    proposal[🗳️<br/>Proposal]
+   author -- 🆕 Create --> proposal
+````
 
-   proposal_author --🆕--> proposal
-```
+---
 
 ### 2. Voting
 
-Other interested participants votes for or against in the proposal.
+Token holders vote FOR ✅ or AGAINST ❎ the proposal.
 
 ```mermaid
 flowchart LR
    voter1[🙋‍♀️<br/>DAO participant]
    voter2[🙋<br/>DAO participant]
-
    proposal[🗳️<br/>Proposal]
-
-   voter1 --✅--> proposal
-   voter2 --❎--> proposal
+   voter1 -- ✅ --> proposal
+   voter2 -- ❎ --> proposal
 ```
 
-### 3. Executing
+---
 
-If proposal received required amount of "for" votes, DAO performs proposed action.
+### 3. Execution
 
-Otherwise proposal closes, DAO ignores this proposal and performing no actions
+If enough FOR votes are collected (based on quorum and threshold), the DAO executes the proposed action.
 
 ```mermaid
 flowchart LR
    proposal[🗳️<br/>Proposal]
-   A@{ shape: f-circ, label: "Junction" }
-
-   proposal --💸--> A
+   action[💸<br/>Execute Action]
+   proposal -- Passed --> action
 ```
 
-## Useful links
+If not enough support is received, the proposal is closed with no effect.
 
--   [Decentralized autonomous organizations (DAOs)](https://ethereum.org/en/dao/) on ethereum.org
--   [What is a DAO in Crypto?](https://youtu.be/KHm0uUPqmVE)
--   [DAOs, DACs, DAs and More: An Incomplete Terminology Guide](https://blog.ethereum.org/2014/05/06/daos-dacs-das-and-more-an-incomplete-terminology-guide)
--   [A Primer on DAOs](https://corpgov.law.harvard.edu/2022/09/17/a-primer-on-daos/)
+---
+
+## 📦 Components
+
+The system consists of several core contracts:
+
+| Contract   | Description                                                   |
+| ---------- | ------------------------------------------------------------- |
+| `Skipper`  | Root DAO contract, stores configuration and manages proposals |
+| `Proposal` | A proposal instance with its own lifecycle and vote tracking  |
+| `Voter`    | Manages per-user voting logic                                 |
+| `Lock`     | Handles locking of governance jettons                         |
+
+---
+
+## 🧪 Try it in Testnet
+
+You can experiment with Skipper on TON testnet.
+
+* [SupaDupaDAO testnet](http://dao.supadupa.space)
+
+---
+
+## 📚 Learn more about DAOs
+
+* [What is a DAO? (Ethereum.org)](https://ethereum.org/en/dao/)
+* [A Primer on DAOs – Harvard Law](https://corpgov.law.harvard.edu/2022/09/17/a-primer-on-daos/)
+* [DAOs, DACs, and More](https://blog.ethereum.org/2014/05/06/daos-dacs-das-and-more-an-incomplete-terminology-guide)
+
+---
+
+## 🤝 Contributing
+
+Want to help improve Skipper? We’d love your support!
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for instructions on:
+
+* Reporting bugs
+* Proposing features
+* Running tests and developing contracts locally
+
+---
+
+## 📜 License
+
+This project is open-source under the [MIT License](LICENSE).
