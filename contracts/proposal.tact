@@ -1,13 +1,25 @@
+// This file contains the core logic for proposals and voting in the Skipper DAO system.
+// The Proposal contract manages the lifecycle of a DAO proposal: initialization, voting, and execution.
+// The Voter contract tracks the state of an individual voter's participation in a proposal and relays votes to the Proposal contract.
+
 import "./consts.tact";
 import "./errors.tact";
 import "./messages.tact";
 import "./utils/storage.tact";
 
+
+// Minimum number of YES votes required for a proposal to be accepted
 const PROPOSAL_ACCEPT_THRESHOLD: Int = ton("300000");
+// Minimum difference between YES and NO votes for proposal acceptance
 const PROPOSAL_VOTES_GAP: Int = ton("10000");
+// Storage cost estimation: number of bits required for Proposal contract
 const PROPOSAL_BITS: Int = 29429;
+// Storage cost estimation: number of cells required for Proposal contract
 const PROPOSAL_CELLS: Int = 73;
 
+// Proposal contract
+// This contract represents a single proposal in the DAO. It stores proposal state, handles initialization,
+// receives and counts votes, and executes the proposal if voting conditions are met.
 contract Proposal {
     master: Address;
     proposal_id: Int as uint64;
@@ -18,12 +30,17 @@ contract Proposal {
     expires_at: Int as uint64;
     payload: ProposalPayload? = null;
     
+    // Initializes the proposal contract with the master address and proposal id.
+    // Sets the default expiration time for voting.
     init(master: Address, proposal_id: Int) {
         self.master = master;
         self.proposal_id = proposal_id;
         self.expires_at = now() + LOCK_INTERVAL;
     }
 
+    // Handles the first initialization of the proposal.
+    // Sets the proposal payload, records the initial YES votes, deploys the first Voter contract for the initiator,
+    // and calculates the expiration time for voting based on the lock period.
     receive(msg: InitProposal){
         nativeThrowIf(ERROR_ALREADY_INITIALIZED, self.is_initialized);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);
@@ -62,6 +79,8 @@ contract Proposal {
         );
     }
 
+    // Handles incoming votes from Voter contracts.
+    // Updates YES/NO vote counts and ensures all voting and timing conditions are met.
     receive(msg: UpdateVotes){
         nativeThrowUnless(ERROR_NOT_INITIALIZED, self.is_initialized);
         nativeThrowIf(ERROR_ALREADY_EXECUTED, self.is_executed);
@@ -81,6 +100,8 @@ contract Proposal {
         }
     }
 
+    // Executes the proposal if all voting conditions are satisfied.
+    // Sends the proposal payload to the target contract and marks the proposal as executed.
     receive(msg: ExecuteProposal){
         nativeThrowUnless(ERROR_NOT_INITIALIZED, self.is_initialized);
         nativeThrowIf(ERROR_ALREADY_EXECUTED, self.is_executed);
@@ -99,6 +120,7 @@ contract Proposal {
         );
     }
 
+    // Returns the current state of the proposal as a ProposalData struct.
     get fun get_proposal_data(): ProposalData {
         return ProposalData{
             proposal_id: self.proposal_id,
@@ -115,6 +137,9 @@ contract Proposal {
 const VOTER_BITS: Int = 16032;
 const VOTER_CELLS: Int = 22;
 
+// Voter contract
+// This contract represents a single voter's participation in a proposal.
+// It stores the voter's locked amount, expiration, and relays voting actions to the Proposal contract.
 contract Voter {
     master: Address;
     proposal: Address;
@@ -123,6 +148,8 @@ contract Voter {
     amount: Int = 0;
     expires_at: Int as uint64;
 
+    // Initializes the voter contract with the master, proposal, and owner addresses.
+    // Sets the default expiration time for the lock.
     init(master: Address, proposal: Address, owner: Address){
         self.master = master;
         self.proposal = proposal;
@@ -130,6 +157,8 @@ contract Voter {
         self.expires_at = now() + LOCK_INTERVAL;
     }
 
+    // Handles the initialization of the voter contract.
+    // Sets the locked amount and expiration, and checks storage requirements.
     receive(msg: InitVoter){
         nativeThrowIf(ERROR_ALREADY_INITIALIZED, self.is_initialized);
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.proposal);
@@ -148,6 +177,8 @@ contract Voter {
         );
     }
 
+    // Handles updates to the voter's balance and vote from the Skipper contract.
+    // Updates the locked amount, expiration, and relays the vote to the Proposal contract.
     receive(msg: UpdateVoterBalance){   
         nativeThrowIf(ERROR_CODE_INVALID_AMOUNT, msg.amount <= 0);             
         nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.master);  
@@ -184,6 +215,7 @@ contract Voter {
         });
     }
 
+    // Returns the current state of the voter as a VoterData struct.
     get fun get_voter_data(): VoterData {
         return VoterData{
             proposal: self.proposal,
