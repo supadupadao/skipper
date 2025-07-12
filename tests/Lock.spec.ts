@@ -32,6 +32,7 @@ function validateJettonDiscovery(
 describe('Success lock behavior', () => {
     let blockchain: Blockchain;
     let deployer: SandboxContract<TreasuryContract>;
+    let nonDeployer: SandboxContract<TreasuryContract>;
     let lock: SandboxContract<JettonLock>;
     let jetton_master: SandboxContract<JettonMaster>;
     let jetton_wallet: SandboxContract<JettonWallet>;
@@ -41,6 +42,7 @@ describe('Success lock behavior', () => {
         blockchain = await Blockchain.create();
 
         deployer = await blockchain.treasury('deployer');
+        nonDeployer = await blockchain.treasury('nonDeployer');
         jetton_master = blockchain.openContract(await JettonMaster.fromInit(deployer.address, 0n));
         jetton_wallet = blockchain.openContract(await JettonWallet.fromInit(jetton_master.address, deployer.address));
         lock = blockchain.openContract(await JettonLock.fromInit(deployer.address, jetton_master.address));
@@ -174,7 +176,29 @@ describe('Success lock behavior', () => {
         const lockData = await lock.getGetLockData();
         expect(lockData.unlock_date).toEqual(BigInt(blockchain.now + LOCK_INTERVAL));
     });
-  
+
+    it('should not allow non-owner to lock jettons', async () => {
+        // Attempt to lock jettons from a non-owner account
+        const lockResult = await lock.send(
+            nonDeployer.getSender(), // Not the deployer/owner
+            {
+                value: toNano('0.5'),
+            },
+            {
+                $$type: 'LockJettons',
+                lock_period: BigInt(LOCK_INTERVAL)
+            }
+        );
+
+        expect(lockResult.transactions).toHaveTransaction({
+            from: nonDeployer.address,
+            to: lock.address,
+            success: false,
+            deploy: false,
+            op: OP_CODES.LockJettons,
+            exitCode: EXIT_CODES.InvalidOwner,
+        });
+    });
 
     it('should proxy message', async () => {
         const messagePayload = beginCell().storeUint(1337, 256).asCell();
