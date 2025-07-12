@@ -82,6 +82,7 @@ contract JettonLock with Deployable {
     // Locks jettons for a specified period.
     // Ensures the new lock period extends the current unlock date.
     receive(msg: LockJettons) {
+        nativeThrowUnless(ERROR_CODE_INVALID_OWNER, sender() == self.owner);
         nativeThrowUnless(ERROR_INVALID_LOCK_PERIOD, msg.lock_period > 0);
         // Ensure the new lock period actually extends the lock date
         let calculatedUnlockDate: Int = now() + msg.lock_period;        
